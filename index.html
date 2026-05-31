@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Motore a Due Tempi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #9e9e9e;
+            --accent-blue: #00a8ff;   /* Miscela fresca */
+            --accent-orange: #ff4500; /* Combustione/Scarico */
+            --accent-yellow: #fbc531; /* Scintilla */
+            --metal-light: #dcdde1;
+            --metal-dark: #718093;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #000;
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-orange);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            max-width: 800px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 2rem auto;
+            gap: 2rem;
+            padding: 0 1rem;
+            flex: 1;
+        }
+
+        /* Sezione Animazione */
+        .animation-section {
+            flex: 1 1 500px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+        }
+
+        /* Sezione Controlli e Spiegazione */
+        .controls-section {
+            flex: 1 1 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--metal-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Slider RPM */
+        .rpm-control {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--accent-orange);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .rpm-display {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-orange);
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Spiegazione Dinamica */
+        .dynamic-phase {
+            font-size: 1.1rem;
+            min-height: 120px;
+            padding: 1.5rem;
+            background: #111;
+            border-left: 5px solid var(--accent-blue);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .legend {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .color-box { width: 16px; height: 16px; border-radius: 3px; }
+        .cb-blue { background: var(--accent-blue); }
+        .cb-orange { background: var(--accent-orange); }
+        .cb-grey { background: #718093; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Motore a Due Tempi</h1>
+        <p class="subtitle">Scopri la meccanica e la fluidodinamica all'interno del cilindro. Un motore a due tempi completa il ciclo termodinamico in una sola rotazione dell'albero motore, combinando le fasi in <strong>Aspirazione/Compressione</strong> (pistone sale) ed <strong>Espansione/Scarico</strong> (pistone scende).</p>
+    </header>
+
+    <main class="container">
+        <section class="animation-section">
+            <canvas id="engineCanvas" width="500" height="600"></canvas>
+        </section>
+
+        <section class="controls-section">
+            
+            <div class="panel">
+                <h2>Acceleratore (RPM)</h2>
+                <div class="rpm-control">
+                    <input type="range" id="rpmRange" min="0" max="8000" value="1500" step="100">
+                    <div class="rpm-display" id="rpmValue">1500 RPM</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Cosa sta succedendo?</h2>
+                <div class="dynamic-phase" id="dynamicText">
+                    In attesa di avviare il motore...
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item"><div class="color-box cb-blue"></div> Miscela Aria/Carburante</div>
+                    <div class="legend-item"><div class="color-box cb-orange"></div> Combustione</div>
+                    <div class="legend-item"><div class="color-box cb-grey"></div> Gas di Scarico</div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('engineCanvas');
+        const ctx = canvas.getContext('2d');
+        const rpmInput = document.getElementById('rpmRange');
+        const rpmDisplay = document.getElementById('rpmValue');
+        const dynamicText = document.getElementById('dynamicText');
+
+        // Geometria e coordinate base del motore
+        const cx = 250;           // Centro asse X
+        const cy = 450;           // Centro asse Y (Albero motore)
+        const crankRadius = 45;   // Raggio della manovella (corsa = 90)
+        const conrodLen = 140;    // Lunghezza biella
+        const pistW = 86;         // Larghezza pistone
+        const pistH = 75;         // Altezza pistone
+        const cylTop = 130;       // Cielo del cilindro (testata)
+
+        // Variabili di stato
+        let angle = 0;            // Angolo dell'albero motore (0 = Punto Morto Superiore)
+        let lastTime = performance.now();
+
+        // Loop di animazione principale
+        function draw(time) {
+            const dt = time - lastTime;
+            lastTime = time;
+
+            // Lettura e calcolo della velocità (RPM)
+            const rpm = parseInt(rpmInput.value);
+            rpmDisplay.textContent = rpm + " RPM";
+
+            // Se RPM è 0, il motore è in pausa. Altrimenti calcoliamo l'incremento dell'angolo.
+            // Scaliamo visivamente gli RPM affinché siano visibili a occhio nudo (8000 RPM reali sarebbero impossibili da vedere a 60fps)
+            const visualRpmScale = rpm / 6000; 
+            const speed = visualRpmScale * 0.4; // Radianti per frame
+            
+            angle += speed;
+            if (angle >= Math.PI * 2) angle -= Math.PI * 2;
+
+            // Calcoli cinematici (Trigonometria base della biella e manovella)
+            // Punto Morto Superiore (PMS) avviene a angle = 0
+            const crankX = cx + crankRadius * Math.sin(angle);
+            const crankY = cy - crankRadius * Math.cos(angle);
+            
+            // Posizione Y del pistone calcolata con il teorema di Pitagora
+            const pistY = crankY - Math.sqrt(conrodLen**2 - (crankX - cx)**2);
+
+            // Determiniamo la fase per l'aggiornamento dell'interfaccia e dei colori fluidi
+            let phase = "";
+            let phaseColor = "";
+            // Da 0 a PI il pistone scende (Scoppio/Espansione/Scarico)
+            // Da PI a 2PI il pistone sale (Aspirazione/Compressione)
+            if (angle > 0 && angle <= Math.PI) {
+                if (angle < 0.5) {
+                    phase = "<strong>FASE 2 (Scoppio ed Espansione):</strong> La candela scocca la scintilla. La rapida espansione dei gas spinge il pistone verso il basso.";
+                    phaseColor = "var(--accent-orange)";
+                } else if (angle < 2.5) {
+                    phase = "<strong>FASE 2 (Scarico):</strong> Il pistone scendendo scopre la luce di scarico (a destra). I gas combusti iniziano ad uscire spinti dalla loro stessa pressione.";
+                    phaseColor = "var(--metal-dark)";
+                } else {
+                    phase = "<strong>FASE 2 (Travaso):</strong> Scoperta la luce di travaso (a sinistra), la miscela fresca pre-compressa nel carter fluisce nel cilindro, aiutando ad espellere i gas di scarico residui.";
+                    phaseColor = "var(--accent-blue)";
+                }
+            } else {
+                if (angle < Math.PI + 1.5) {
+                    phase = "<strong>FASE 1 (Compressione e Aspirazione):</strong> Il pistone risale chiudendo le luci. La miscela nel cilindro viene compressa. Nel carter si crea depressione.";
+                    phaseColor = "var(--accent-blue)";
+                } else {
+                    phase = "<strong>FASE 1 (Aspirazione nel carter):</strong> La luce di aspirazione (in basso a destra) si apre. Nuova miscela fresca entra nel carter grazie alla depressione generata dal pistone che sale.";
+                    phaseColor = "var(--accent-blue)";
+                }
+            }
+
+            // Aggiorna il testo dinamico solo se il motore gira
+            if (rpm > 0) {
+                dynamicText.innerHTML = phase;
+                dynamicText.style.borderLeftColor = phaseColor;
+            }
+
+            // ------------------------------------------
+            // FASE DI DISEGNO (CANVAS RENDERING)
+            // ------------------------------------------
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Disegna i fluidi (colori dinamici in base alla posizione)
+            drawFluids(pistY, angle);
+
+            // Disegna il blocco motore statico (Cilindro, Carter, Luci)
+            drawEngineBlock();
+
+            // Disegna le parti in movimento (Pistone, Biella, Albero)
+            drawMovingParts(pistY, crankX, crankY, angle);
+
+            // Disegna la scintilla se l'angolo è vicino a 0
+            if (angle < 0.3 || angle > Math.PI * 2 - 0.1) {
+                if(rpm > 0) drawSpark();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        function drawEngineBlock() {
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = "#dcdde1";
+            ctx.fillStyle = "#2f3640";
+
+            // Carter (Involucro inferiore)
+            ctx.beginPath();
+            ctx.arc(cx, cy, 80, -Math.PI/4, Math.PI + Math.PI/4);
+            ctx.stroke();
+
+            // Parete sinistra del cilindro e Luce di Travaso (Bypass)
+            ctx.beginPath();
+            ctx.moveTo(cx - 45, cy - 55); // Da carter
+            ctx.lineTo(cx - 45, 270);
+            ctx.lineTo(cx - 75, 270); // Bypass out
+            ctx.lineTo(cx - 75, 180); // Bypass in
+            ctx.lineTo(cx - 45, 180);
+            ctx.lineTo(cx - 45, cylTop);
+            ctx.stroke();
+
+            // Parete destra, Luce Scarico e Luce Aspirazione
+            ctx.beginPath();
+            ctx.moveTo(cx + 45, cylTop);
+            ctx.lineTo(cx + 45, 170); // Inizio Scarico
+            ctx.moveTo(cx + 45, 210); // Fine Scarico
+            ctx.lineTo(cx + 45, 280); // Inizio Aspirazione
+            ctx.moveTo(cx + 45, 320); // Fine Aspirazione
+            ctx.lineTo(cx + 45, cy - 55);
+            ctx.stroke();
+
+            // Testata cilindro (chiusura in alto)
+            ctx.beginPath();
+            ctx.moveTo(cx - 45, cylTop);
+            ctx.lineTo(cx + 45, cylTop);
+            ctx.stroke();
+
+            // Condotto Scarico (Destra alto)
+            ctx.beginPath();
+            ctx.moveTo(cx + 45, 170);
+            ctx.lineTo(cx + 100, 170);
+            ctx.moveTo(cx + 45, 210);
+            ctx.lineTo(cx + 100, 210);
+            ctx.stroke();
+
+            // Condotto Aspirazione (Destra basso)
+            ctx.beginPath();
+            ctx.moveTo(cx + 45, 280);
+            ctx.lineTo(cx + 100, 280);
+            ctx.moveTo(cx + 45, 320);
+            ctx.lineTo(cx + 100, 320);
+            ctx.stroke();
+
+            // Candela
+            ctx.fillStyle = "#f5f6fa";
+            ctx.fillRect(cx - 10, cylTop - 25, 20, 25);
+            ctx.fillStyle = "#353b48";
+            ctx.fillRect(cx - 4, cylTop, 8, 8); // Elettrodo
+        }
+
+        function drawMovingParts(pistY, crankX, crankY, angle) {
+            // Albero motore e contrappeso
+            ctx.beginPath();
+            ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+            ctx.fillStyle = "#7f8fa6";
+            ctx.fill();
+            ctx.stroke();
+
+            // Contrappeso (semicerchio opposto al perno)
+            ctx.beginPath();
+            ctx.arc(cx, cy, 45, angle - Math.PI/2, angle + Math.PI/2);
+            ctx.lineWidth = 15;
+            ctx.strokeStyle = "#353b48";
+            ctx.stroke();
+            ctx.lineWidth = 6; // Ripristina
+
+            // Biella
+            ctx.beginPath();
+            ctx.moveTo(crankX, crankY);
+            ctx.lineTo(cx, pistY);
+            ctx.lineWidth = 12;
+            ctx.strokeStyle = "#718093";
+            ctx.stroke();
+
+            // Perno manovella e perno pistone
+            ctx.beginPath();
+            ctx.arc(crankX, crankY, 8, 0, Math.PI*2);
+            ctx.arc(cx, pistY, 8, 0, Math.PI*2);
+            ctx.fillStyle = "#2f3640";
+            ctx.fill();
+
+            // Pistone
+            const pistTop = pistY - pistH/2;
+            ctx.fillStyle = "#dcdde1";
+            ctx.beginPath();
+            ctx.roundRect(cx - pistW/2, pistTop, pistW, pistH, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            // Fasce elastiche
+            ctx.strokeStyle = "#353b48";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx - pistW/2, pistTop + 10);
+            ctx.lineTo(cx + pistW/2, pistTop + 10);
+            ctx.moveTo(cx - pistW/2, pistTop + 18);
+            ctx.lineTo(cx + pistW/2, pistTop + 18);
+            ctx.stroke();
+            ctx.lineWidth = 6; // Ripristina per futuri disegni
+        }
+
+        function drawFluids(pistY, angle) {
+            const pistTop = pistY - pistH/2;
+            const pistBottom = pistY + pistH/2;
+
+            // --- 1. Camera di Combustione (Sopra il pistone) ---
+            ctx.globalAlpha = 0.6;
+            if (angle > 0 && angle < Math.PI / 2) {
+                // Scoppio: Arancione scuro
+                ctx.fillStyle = "#ff4500";
+            } else if (angle >= Math.PI / 2 && angle < Math.PI) {
+                // Scarico: Grigio
+                ctx.fillStyle = "#7f8fa6";
+            } else {
+                // Compressione: Blu (opacità aumenta comprimendo)
+                const comp = 1 - ((pistTop - cylTop) / (320 - cylTop)); // 0 = giù, 1 = su
+                ctx.globalAlpha = 0.2 + (comp * 0.6);
+                ctx.fillStyle = "#00a8ff";
+            }
+            ctx.fillRect(cx - 42, cylTop, 84, pistTop - cylTop);
+            ctx.globalAlpha = 1.0;
+
+            // --- 2. Luce di Scarico (Destra alta) ---
+            if (pistTop > 170 && angle > 1) {
+                // Quando scoperta, gas escono
+                ctx.fillStyle = "#7f8fa6";
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(cx + 45, 170, 55, 40);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // --- 3. Carter (Sotto il pistone) ---
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#00a8ff";
+            ctx.beginPath();
+            ctx.arc(cx, cy, 78, 0, Math.PI*2);
+            ctx.fill();
+
+            // Area sotto il pistone fino al carter
+            ctx.fillRect(cx - 42, pistBottom, 84, (cy-78) - pistBottom + 80);
+            ctx.globalAlpha = 1.0;
+
+            // --- 4. Luce di Aspirazione (Destra bassa) ---
+            if (pistBottom < 320) {
+                // Pressione negativa: la miscela entra
+                ctx.fillStyle = "#00a8ff";
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(cx + 45, 280, 55, 40);
+                ctx.globalAlpha = 1.0;
+            }
+
+            // --- 5. Luce di Travaso (Sinistra) ---
+            if (pistTop > 180) {
+                // Flusso dal carter al cilindro
+                ctx.fillStyle = "#00a8ff";
+                ctx.globalAlpha = 0.7;
+                ctx.fillRect(cx - 75, 180, 30, 90);
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        function drawSpark() {
+            ctx.fillStyle = "#fbc531";
+            ctx.shadowColor = "#fbc531";
+            ctx.shadowBlur = 20;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cylTop);
+            ctx.lineTo(cx - 15, cylTop + 15);
+            ctx.lineTo(cx - 5, cylTop + 18);
+            ctx.lineTo(cx - 20, cylTop + 35);
+            ctx.lineTo(cx + 5, cylTop + 20);
+            ctx.lineTo(cx - 2, cylTop + 15);
+            ctx.lineTo(cx + 15, cylTop + 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.shadowBlur = 0; // Ripristina
+        }
+
+        // Avvio simulazione
+        requestAnimationFrame(draw);
+
+    </script>
+</body>
+</html>
