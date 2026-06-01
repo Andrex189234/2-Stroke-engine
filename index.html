@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulatore Vortex Rok Junior 125cc</title>
+    <title>Simulatore Vortex Rok Junior 125cc - Bugfixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -79,11 +79,11 @@
         canvas { max-width: 100%; height: auto; }
 
         @keyframes rev-limiter-shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            50% { transform: translate(-1px, -1px) rotate(0.2deg); }
-            100% { transform: translate(1px, -1px) rotate(0deg); }
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            50% { transform: translate(-2px, -1px) rotate(0.4deg); }
+            100% { transform: translate(1px, -2px) rotate(0deg); }
         }
-        .limiter-active { animation: rev-limiter-shake 0.02s infinite; filter: drop-shadow(0 0 15px rgba(239,68,68,0.4)); }
+        .limiter-active { animation: rev-limiter-shake 0.01s infinite; filter: drop-shadow(0 0 20px rgba(239,68,68,0.6)); }
 
         .controls-section {
             flex: 1 1 400px;
@@ -225,7 +225,7 @@
         const canvas = document.getElementById('engineCanvas');
         const ctx = canvas.getContext('2d');
         
-        // UI
+        // UI Elements
         const rpmDisplay = document.getElementById('rpmValue');
         const tempDisplay = document.getElementById('tempValue');
         const tempBar = document.getElementById('tempBar');
@@ -239,24 +239,25 @@
         const gasPedal = document.getElementById('gasPedal');
         const brakePedal = document.getElementById('brakePedal');
 
-        // Dimensioni meccaniche
-        const cx = 300, cy = 500, crankRadius = 54, conrodLen = 110, pistW = 98, pistH = 80, cylTop = 180;       
+        // Geometria Meccanica Sicura (Fix Biella anti-NaN)
+        const cx = 300, cy = 500, crankRadius = 54, conrodLen = 130, pistW = 98, pistH = 80, cylTop = 180;       
 
-        // Stato Rok
+        // Stato Fisico
         let angle = 0;
         let lastTime = performance.now();
         let isEngineRunning = false;
-        let damageType = null; // "freddo" o "caldo"
+        let damageType = null; 
         
         let currentRpm = 0;           
-        const MIN_RPM = 2800; // Regime di minimo standard del Rok Junior
-        const MAX_ROK_RPM = 13800; // Limitatore fisso da fiche tecnica
+        const MIN_RPM = 2800; 
+        const MAX_ROK_RPM = 13800; 
 
         const AMBIENT_TEMP = 20;
         let currentTemp = AMBIENT_TEMP;
 
         let gasPressed = false;
         let brakePressed = false;
+        let limiterToggle = false; // Interruttore per simulare il sfarfallio dell'ECU
 
         function bindPedal(element, isGas) {
             const press = (e) => { e.preventDefault(); if(isEngineRunning && !damageType) { if(isGas) gasPressed = true; else brakePressed = true; } };
@@ -296,22 +297,23 @@
             const dt = time - lastTime;
             lastTime = time;
 
-            // 1. GESTIONE DINAMICA GIRI E LIMITATORE A 13.8K
+            // 1. DINAMICA GIRI E FIX LIMITATORE AD ALTA FREQUENZA
             let targetRpm = 0;
             let accelerationFactor = 0.05; 
             let onLimiter = false;
 
             if (isEngineRunning && !damageType) {
                 if (gasPressed) {
-                    targetRpm = MAX_ROK_RPM + 200; // Prova ad andare oltre ma la centralina taglia
-                    if (currentRpm >= MAX_ROK_RPM - 50) {
+                    targetRpm = MAX_ROK_RPM + 100;
+                    if (currentRpm >= MAX_ROK_RPM - 40) {
                         onLimiter = true;
-                        // Simula il taglio elettronico della candela: i giri scendono repentinamente e risalgono
-                        currentRpm = MAX_ROK_RPM - (Math.random() * 350); 
+                        limiterToggle = !limiterToggle;
+                        // Hard cut alternato sui frame per l'effetto sound realistico del kart
+                        currentRpm = limiterToggle ? MAX_ROK_RPM : MAX_ROK_RPM - 220;
                     }
                 } else if (brakePressed) {
                     targetRpm = MIN_RPM;
-                    accelerationFactor = 0.2; // Il freno motore e il freno fisico bloccano la trasmissione
+                    accelerationFactor = 0.25; 
                 } else {
                     targetRpm = MIN_RPM + (Math.random() - 0.5) * 60;
                 }
@@ -320,17 +322,19 @@
                 accelerationFactor = 0.1;
             }
 
-            if (!onLimiter) {
+            if (!onLimiter && isEngineRunning) {
                 currentRpm += (targetRpm - currentRpm) * accelerationFactor;
+            } else if (!isEngineRunning) {
+                currentRpm += (0 - currentRpm) * 0.08;
             }
+            
             if (currentRpm < 50) currentRpm = 0;
 
             const displayRpm = Math.round(currentRpm);
             rpmDisplay.textContent = displayRpm;
 
-            // 2. SIMULAZIONE TERMICA VORTEX ROK
+            // 2. TERMODINAMICA
             if (isEngineRunning && !damageType) {
-                // Generazione di calore bilanciata per un radiatore da kart medio
                 let heatGen = Math.pow(currentRpm / 11000, 2) * (gasPressed ? 0.35 : 0.05);
                 let cooling = 0.01 + (currentRpm / 13800) * 0.04 + (currentTemp - AMBIENT_TEMP) * 0.0012;
                 currentTemp += (heatGen - cooling);
@@ -343,7 +347,6 @@
             const tempPercent = Math.min(100, ((currentTemp - AMBIENT_TEMP) / (100 - AMBIENT_TEMP)) * 100);
             tempBar.style.width = tempPercent + "%";
 
-            // Stati Termici
             if (currentTemp < 48) {
                 thermalStateDisp.textContent = "Freddo (<48°C)";
                 thermalStateDisp.style.color = "var(--accent-blue)";
@@ -358,7 +361,7 @@
                 tempBar.style.backgroundColor = "var(--accent-red)";
             }
 
-            // 3. STATO FRIZIONE CENTRIFUGA E VALVOLA DI SCARICO
+            // 3. STATO FRIZIONE E VALVOLA
             if (displayRpm > 4500) {
                 clutchStateDisp.textContent = "In Presa Diretta";
                 clutchStateDisp.style.color = "var(--accent-green)";
@@ -370,7 +373,6 @@
                 clutchStateDisp.style.color = "var(--text-muted)";
             }
 
-            // Valvola Pneumatica a 8.8k RPM
             let valveOpen = false;
             if (displayRpm >= 8800) {
                 valveOpen = true;
@@ -381,15 +383,13 @@
                 valveStateDisp.style.color = "var(--text-muted)";
             }
 
-            // 4. FISICA DEI DANNI (GRIPPAGGIO A FREDDO O SURRISCALDAMENTO)
+            // 4. LOGICA ROTTURE PROBABILISTICHE
             if (isEngineRunning && !damageType) {
-                // Se insisti ad accelerare a fondo sotto i 48 gradi c'è un rischio reale frame per frame
-                if (currentTemp < 48 && displayRpm > 10000 && gasPressed && Math.random() < 0.003) {
+                if (currentTemp < 48 && displayRpm > 10000 && gasPressed && Math.random() < 0.002) {
                     damageType = "freddo";
                     isEngineRunning = false;
                     spegniInterfacce();
                 }
-                // Grippaggio per surriscaldamento oltre i 95 gradi
                 if (currentTemp >= 95) {
                     damageType = "caldo";
                     isEngineRunning = false;
@@ -397,14 +397,13 @@
                 }
             }
 
-            // Sblocco del pistone quando scende la temperatura
             if ((damageType === "freddo" || damageType === "caldo") && currentTemp < 40) {
                 damageType = null;
                 engineBtn.textContent = "Start";
                 engineBtn.classList.remove('broken');
             }
 
-            // Gestione Grafica Interfaccia e Scuotimenti
+            // UI Diagnostics & Shaking
             canvasContainer.className = 'animation-section';
             
             if (damageType) {
@@ -413,51 +412,56 @@
                     engineBtn.textContent = "GRIPPATO";
                     statusValue.textContent = "BLOCCO A FREDDO";
                     statusValue.style.color = "var(--accent-red)";
-                    dynamicText.innerHTML = "<strong>GRIPPAGGIO A FREDDO:</strong> Il pistone Vertex si è espanso istantaneamente all'interno della canna del cilindro ancora fredda. Aspetta che scenda sotto i 40°C.";
+                    dynamicText.innerHTML = "<strong>GRIPPAGGIO A FREDDO:</strong> Tolleranza pistone-cilindro azzerata. Il pistone Vertex si è dilatato di colpo. Attendi il raffreddamento sotto i 40°C.";
                 } else {
                     engineBtn.textContent = "COTTO";
-                    statusValue.textContent = "ECCESSIVA DILATAZIONE";
+                    statusValue.textContent = "DILATAZIONE CRITICA";
                     statusValue.style.color = "var(--accent-red)";
-                    dynamicText.innerHTML = "<strong>GRIPPAGGIO TERMICO:</strong> Il motore ha superato i 95°C. Mancanza di refrigerazione. Lascia raffreddare.";
+                    dynamicText.innerHTML = "<strong>GRIPPAGGIO TERMICO:</strong> Hai cotto il motore oltre i 95°C. Il velo di lubrificante è saltato.";
                 }
             } else {
                 if (onLimiter) {
                     canvasContainer.classList.add('limiter-active');
                     statusValue.textContent = "LIMITATORE ECU (13.8k)";
                     statusValue.style.color = "var(--accent-red)";
-                    dynamicText.innerHTML = "<strong>LIMITATORE DI GIRI:</strong> La centralina elettronica originale del Rok Junior sta tagliando la corrente per proteggere l'imbiellaggio.";
+                    dynamicText.innerHTML = "<strong>LIMITATORE ATTIVO:</strong> La centralina taglia l'accensione. Il motore Rok 'mura' a 13.800 giri per regolamento.";
                 } else if (valveOpen) {
                     statusValue.textContent = "Valvola Aperta";
                     statusValue.style.color = "var(--accent-orange)";
-                    dynamicText.innerHTML = "<strong>PIENO REGIME:</strong> La valvola di scarico pneumatica è sollevata. Ottimizzazione delle onde di pressione in espansione.";
+                    dynamicText.innerHTML = "<strong>VALVOLA PNEUMATICA APERTA:</strong> Il diagramma di scarico si è alzato, ottimizzando la risonanza dello scarico OTK.";
                 } else if (displayRpm >= MIN_RPM - 100) {
-                    statusValue.textContent = "Erogazione Regolamentare";
+                    statusValue.textContent = "Erogazione Pulita";
                     statusValue.style.color = "var(--accent-blue)";
-                    dynamicText.innerHTML = displayRpm > 5000 ? "<strong>FASE DI TIRO:</strong> La frizione ha fatto presa totale, la potenza si scarica sull'assale posteriore del kart." : "<strong>MINIMO ROK:</strong> Il motore gira libero, la frizione centrifuga impedisce al kart di muoversi.";
+                    dynamicText.innerHTML = displayRpm > 5000 ? "<strong>ACCELERAZIONE:</strong> Frizione in presa totale. Spinta lineare sull'assale posteriore." : "<strong>MINIMO:</strong> Il carburatore Dell'Orto mantiene il motore acceso senza far attaccare i ceppi della frizione.";
                 } else {
                     statusValue.textContent = isEngineRunning ? "Avviamento..." : "Spento";
                 }
             }
 
-            // Cinematica parti in movimento
+            // FIX: Reset dell'angolo per prevenire l'accumulo all'infinito (Anti-Memory Leak)
             let speed = 0;
             if (currentRpm > 0) {
-                speed = (currentRpm / 60) * 0.1; 
+                speed = (currentRpm / 60) * 0.08; 
             }
             angle += speed;
+            if (angle >= Math.PI * 2) {
+                angle -= Math.PI * 2;
+            }
 
+            // Cinematica fluida
             const crankX = cx + crankRadius * Math.sin(angle);
             const crankY = cy - crankRadius * Math.cos(angle);
             const pistY = crankY - Math.sqrt(conrodLen**2 - (crankX - cx)**2);
 
-            // Rendering grafico
+            // Canvas Rendering
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawFluids(pistY, angle, currentRpm, valveOpen);
+            drawFluids(pistY, angle, currentRpm);
             drawEngineBlock(currentTemp, valveOpen);
             drawMovingParts(pistY, crankX, crankY, angle);
 
+            // FIX: Scintilla in fase (vicino allo zero radiante / PMS)
             if (isEngineRunning && currentRpm > 100 && !onLimiter && !damageType) {
-                if (angle % (Math.PI * 2) < 0.4) {
+                if (angle < 0.2 || angle > Math.PI * 2 - 0.2) {
                     drawSpark();
                 }
             }
@@ -473,7 +477,6 @@
             
             ctx.lineWidth = 8; ctx.strokeStyle = `rgb(${r},${g},${b})`; ctx.lineJoin = "round";
             
-            // Profilo cilindro Rok
             ctx.beginPath();
             ctx.moveTo(cx - 52, cy - 60); ctx.lineTo(cx - 52, 280); ctx.lineTo(cx - 90, 280);
             ctx.lineTo(cx - 90, 190); ctx.lineTo(cx - 52, 190); ctx.lineTo(cx - 52, cylTop);
@@ -481,7 +484,6 @@
             ctx.lineTo(cx + 90, 250); ctx.lineTo(cx + 52, 250); ctx.lineTo(cx + 52, cy - 60);
             ctx.stroke();
 
-            // Disegno Valvola di scarico (Guida pneumatica superiore)
             ctx.lineWidth = 3; ctx.strokeStyle = valveOpen ? "var(--accent-orange)" : "#475569";
             ctx.fillStyle = valveOpen ? "rgba(251,146,60,0.2)" : "#334155";
             ctx.fillRect(cx + 54, 195, 30, valveOpen ? 10 : 25);
@@ -489,16 +491,13 @@
         }
 
         function drawMovingParts(pistY, crankX, crankY, angle) {
-            // Albero a gomiti
             ctx.beginPath(); ctx.arc(cx, cy, 50, 0, Math.PI * 2); ctx.fillStyle = "#1e293b"; ctx.fill();
             ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = "#94a3b8"; ctx.fill();
             
-            // Biella
             ctx.lineWidth = 10; ctx.strokeStyle = "#64748b"; ctx.lineCap = "round";
             ctx.beginPath(); ctx.moveTo(crankX, crankY); ctx.lineTo(cx, pistY); ctx.stroke();
             ctx.beginPath(); ctx.arc(crankX, crankY, 8, 0, Math.PI * 2); ctx.fillStyle = "#334155"; ctx.fill();
 
-            // Pistone Rok (Alesaggio flessibile)
             const pistTop = pistY - pistH/2;
             const grad = ctx.createLinearGradient(cx - pistW/2, 0, cx + pistW/2, 0);
             if (damageType) {
@@ -509,29 +508,26 @@
             ctx.fillStyle = grad;
             ctx.fillRect(cx - pistW/2, pistTop, pistW, pistH);
 
-            // Fascia elastica (Segmento singolo tipico dei motori racing)
             ctx.fillStyle = "#0f172a";
             ctx.fillRect(cx - pistW/2, pistTop + 8, 5, 3);
             ctx.fillRect(cx + pistW/2 - 5, pistTop + 8, 5, 3);
         }
 
-        function drawFluids(pistY, angle, rpm, valveOpen) {
+        function drawFluids(pistY, angle, rpm) {
             const pistTop = pistY - pistH/2;
             if (rpm < 200 || damageType) return;
 
-            const modAngle = angle % (Math.PI * 2);
-            if (modAngle < 0.5) {
-                // Scoppio camera di combustione
+            // FIX: Calcolo cicli basato sull'angolo normalizzato corretto
+            if (angle < 0.8 || angle > Math.PI * 2 - 0.8) {
                 const fire = ctx.createRadialGradient(cx, cylTop, 2, cx, cylTop + 20, 90);
                 fire.addColorStop(0, "#ffffff");
                 fire.addColorStop(0.3, "var(--accent-orange)");
                 fire.addColorStop(1, "rgba(0,0,0,0)");
                 ctx.fillStyle = fire;
-                ctx.fillRect(cx - 48, cylTop, 96, pistTop - cylTop);
-            } else if (modAngle > Math.PI) {
-                // Miscela fresca che sale (Travaso)
+                ctx.fillRect(cx - 48, cylTop, 96, Math.max(0, pistTop - cylTop));
+            } else if (angle > Math.PI) {
                 ctx.fillStyle = "rgba(56, 189, 248, 0.25)";
-                ctx.fillRect(cx - 48, cylTop, 96, pistTop - cylTop);
+                ctx.fillRect(cx - 48, cylTop, 96, Math.max(0, pistTop - cylTop));
             }
         }
 
