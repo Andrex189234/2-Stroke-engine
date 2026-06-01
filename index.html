@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Rok 125 - Dyno Telemetry & Ultra Realism</title>
+    <title>Vortex Junior Rok - Dyno Telemetry & Ultra Realism</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -67,13 +67,13 @@
 
         .display-value.rpm { color: var(--accent-blue); }
         .display-value.speed { color: var(--accent-green); }
-        .display-value.temp { color: #facc15; }
+        .display-value.temp { color: #facc15; transition: color 0.3s; }
 
         .bar-container { width: 100%; height: 5px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
-        .bar-fill { height: 100%; transition: width 0.1s linear; }
+        .bar-fill { height: 100%; transition: width 0.1s linear, background-color 0.3s; }
         .bar-fill.rpm { background: linear-gradient(90deg, var(--accent-blue), var(--accent-red)); }
         .bar-fill.speed { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); }
-        .bar-fill.temp { background: linear-gradient(90deg, var(--accent-blue), #facc15, var(--accent-red)); }
+        .bar-fill.temp { background: var(--accent-blue); }
 
         .pedals-container { display: flex; gap: 1rem; margin-top: 0.5rem; }
         .pedal {
@@ -95,8 +95,8 @@
 <body>
 
     <header>
-        <h1>Vortex Rok 125cc Dyno</h1>
-        <div class="subtitle">Telemetria Potenza & Termodinamica a Liquido</div>
+        <h1>Vortex Junior Rok 125cc</h1>
+        <div class="subtitle">Dyno Telemetry & Termodinamica Veloce</div>
     </header>
 
     <main class="container">
@@ -107,7 +107,7 @@
         <section class="controls-section">
             <div class="panel">
                 <div class="panel-header">
-                    <h2>Cruscotto Pilota (MyChron 5)</h2>
+                    <h2>Cruscotto (MyChron 5)</h2>
                     <button class="engine-switch" id="engineBtn">Start</button>
                 </div>
                 
@@ -156,7 +156,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Kart fermo ai box. Motore freddo (20°C). Premi <strong>START</strong> per avviare.
+                    Kart fermo. Acqua fredda a 20°C. Premi <strong>START</strong> per avviare.
                 </div>
             </div>
         </section>
@@ -196,7 +196,7 @@
         
         const MIN_RPM = 2800; 
         const MAX_RPM = 13800;
-        const MAX_SPEED = 122; // Circa 13800 rpm con rapporto corretto
+        const MAX_SPEED = 122; 
         const CLUTCH_BITE = 4200; 
         const RPM_PER_KMH = MAX_RPM / MAX_SPEED; 
 
@@ -209,7 +209,7 @@
             const release = (e) => { e.preventDefault(); if(isGas) gasPressed = false; else brakePressed = false; };
             element.addEventListener('mousedown', press); element.addEventListener('mouseup', release); element.addEventListener('mouseleave', release);
             try { element.addEventListener('touchstart', press, {passive: false}); } catch(err) { element.addEventListener('touchstart', press); }
-            try { element.addEventListener('touchend', release, {passive: false}); } catch(err) { element.addEventListener('touchend', release); }
+            try { element.addEventListener('touchend', release, {passive: false}); } catch(err) { element.addEventListener('touchstart', press); }
         }
         bindPedal(gasPedal, true); bindPedal(brakePedal, false);
 
@@ -226,74 +226,67 @@
         });
 
         // ==========================================
-        // MOTORE FISICO E TERMODINAMICO
+        // MOTORE FISICO E TERMODINAMICO (Stile JUNIOR ROK)
         // ==========================================
         function updatePhysics() {
-            // 1. CALCOLO DINAMOMETRICO (Coppia e Potenza)
-            // Curva a campana asimmetrica per un 2 tempi racing (picco Nm a ~10.000, picco HP a ~11.500)
             let currentNm = 0;
             let currentHp = 0;
             let currentKw = 0;
 
             if (isEngineRunning && engineRpm > 1000) {
-                // Formula fittizia per creare la curva di erogazione realistica del Rok 125
-                let baseNm = 6; // Coppia ai bassi
-                let boostNm = 14.5 * Math.exp(-Math.pow((engineRpm - 10200) / 2800, 2)); // Picco di coppia
+                // Curva Junior Rok: circa 21-23 HP massimi
+                let baseNm = 5; 
+                let boostNm = 12.5 * Math.exp(-Math.pow((engineRpm - 10500) / 2800, 2)); 
                 
-                // Se la frizione stacca, il motore "frulla" senza carico reale
                 let loadFactor = (engineRpm > CLUTCH_BITE && speedKmh > 5) ? 1.0 : 0.6;
                 if (!gasPressed) loadFactor = 0.1;
 
                 currentNm = (baseNm + boostNm) * loadFactor;
                 
-                // Taglio limitatore (Drop drastico dopo i 13.5k)
                 if(engineRpm > 13500) currentNm *= (1 - (engineRpm - 13500)/300);
                 if(currentNm < 0) currentNm = 0;
 
-                // Calcolo Cavalli = (Coppia * RPM) / 7120 (costante metrica circa)
                 currentHp = (currentNm * engineRpm) / 7120;
                 currentKw = currentHp * 0.7457;
             }
 
-            // Aggiorna UI Dyno
             hpValue.textContent = currentHp.toFixed(1);
             kwValue.textContent = currentKw.toFixed(1);
             nmValue.textContent = currentNm.toFixed(1);
 
-            // 2. CALCOLO TEMPERATURE (Termodinamica lenta)
+            // 2. CALCOLO TEMPERATURE VELOCE (Poca acqua, si scalda in fretta)
             if (isEngineRunning) {
-                // Il calore è generato in base a quanto stiamo bruciando (Potenza generata)
-                let heatGen = currentHp * 0.0006; 
-                if(!gasPressed) heatGen = 0.0001; // Calore minimo di accensione
+                // 0.0008 = circa 1-2 gradi al secondo sotto sforzo massimo (molto realistico per un 2T)
+                let heatGen = currentHp * 0.0008; 
+                if(!gasPressed) heatGen = 0.002; // Al minimo si scalda progressivamente
                 
-                // Il raffreddamento dipende dall'aria che entra nel radiatore (Velocità)
-                let airflowCooling = (speedKmh / MAX_SPEED) * 0.008; 
-                let passiveCooling = (waterTemp - 20) * 0.0002; // Dispersione ambiente
+                // Raffreddamento aerodinamico: bilancia il calore se andiamo veloci in rettilineo
+                let airflowCooling = (speedKmh / MAX_SPEED) * 0.022; 
+                let passiveCooling = (waterTemp - 20) * 0.0001; // Dispersione
                 
                 waterTemp += heatGen - airflowCooling - passiveCooling;
             } else {
-                waterTemp -= (waterTemp - 20) * 0.0005; // Si raffredda lentamente da spento
+                waterTemp -= (waterTemp - 20) * 0.0008; // Si raffredda più rapido spento
             }
             if (waterTemp < 20) waterTemp = 20;
+            if (waterTemp > 110) waterTemp = 110; // Tappo radiatore limite
 
-            // 3. MOVIMENTO E INERZIA (Attriti corretti per kart leggero)
+            // 3. MOVIMENTO E INERZIA
             if (!isEngineRunning) {
                 engineRpm -= engineRpm * 0.05;
                 speedKmh -= speedKmh * 0.01;
                 return;
             }
 
-            // Resistenza aerodinamica drastciamente ridotta per permettere di arrivare a 13800rpm
             let aeroDrag = (speedKmh * speedKmh) * 0.000035; 
             let rollingDrag = 0.08; 
 
             if (speedKmh < 8) { 
-                // Frizione in slittamento
                 if (gasPressed) {
-                    engineRpm += 600; // Sgasata veloce a vuoto
+                    engineRpm += 600; 
                     if (engineRpm > CLUTCH_BITE) {
-                        speedKmh += 0.8; // Il kart scatta in avanti
-                        engineRpm -= 200; // Scende leggermente di giri sotto sforzo
+                        speedKmh += 0.8; 
+                        engineRpm -= 200; 
                     }
                 } else if (brakePressed) {
                     speedKmh = 0;
@@ -305,10 +298,8 @@
                 if (speedKmh < 0) speedKmh = 0;
 
             } else {
-                // Presa diretta (Frizione attaccata)
                 if (gasPressed) {
-                    // L'accelerazione dipende dalla coppia erogata dal motore!
-                    let push = currentNm / 8; // Forza spinta
+                    let push = currentNm / 8; 
                     speedKmh += push - aeroDrag - rollingDrag;
                 } else if (brakePressed) {
                     speedKmh -= 2.8; 
@@ -319,12 +310,11 @@
                 if (speedKmh > MAX_SPEED) speedKmh = MAX_SPEED;
                 if (speedKmh < 0) speedKmh = 0;
 
-                // Sync rigoroso: giri vincolati alla velocità
                 let targetRpm = speedKmh * RPM_PER_KMH;
                 engineRpm += (targetRpm - engineRpm) * 0.4;
             }
 
-            if (engineRpm > MAX_RPM) engineRpm = MAX_RPM - (Math.random()*150); // Effetto limitatore a scatto
+            if (engineRpm > MAX_RPM) engineRpm = MAX_RPM - (Math.random()*150); 
             if (engineRpm < MIN_RPM && isEngineRunning && speedKmh < 2) engineRpm = MIN_RPM + (Math.random()*50);
         }
 
@@ -344,27 +334,34 @@
             speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
             tempBar.style.width = Math.min(100, (waterTemp - 20) / 80 * 100) + "%";
 
-            // Colore barra temperatura
-            if (waterTemp < 45) tempBar.style.background = "var(--accent-blue)";
-            else if (waterTemp < 65) tempBar.style.background = "var(--accent-green)";
-            else tempBar.style.background = "var(--accent-red)";
+            // Colori Termodinamica MyChron (Blu, Verde Ideale, Rosso)
+            if (waterTemp < 40) {
+                tempBar.style.background = "var(--accent-blue)";
+                tempDisplay.style.color = "var(--accent-blue)";
+            } else if (waterTemp < 55) {
+                tempBar.style.background = "var(--accent-green)";
+                tempDisplay.style.color = "var(--accent-green)";
+            } else {
+                tempBar.style.background = "var(--accent-red)";
+                tempDisplay.style.color = "var(--accent-red)";
+            }
 
             let logHtml = "";
             if (!isEngineRunning) {
                 logHtml = "Motore spento.";
             } else {
-                if (rpmDisp > 13500) {
-                    logHtml = "<strong>LIMITATORE ECU</strong><br>Oltre i 13.5k la curva di coppia crolla vertiginosamente.";
-                } else if (rpmDisp > 11000) {
-                    logHtml = "<strong>PICCO DI POTENZA (HP)</strong><br>Stai sfruttando tutti i " + hpValue.textContent + " cavalli del Rok!";
-                } else if (rpmDisp > 9000) {
-                    logHtml = "<strong>PICCO DI COPPIA (Nm)</strong><br>Valvola di scarico completamente aperta, spinta massima.";
+                if (waterTemp > 90) {
+                    logHtml = "<strong>⚠️ EBOLLIZIONE IMMINENTE!</strong><br>La temperatura è critica, prendi velocità per far entrare aria nel radiatore o fermati!";
+                } else if (rpmDisp > 13500) {
+                    logHtml = "<strong>LIMITATORE ECU</strong><br>Oltre i 13.5k la curva di coppia scende.";
+                } else if (rpmDisp > 10500) {
+                    logHtml = "<strong>PICCO DI POTENZA (HP)</strong><br>Stai sfruttando i ~22 HP del Junior Rok!";
                 } else if (speedKmh >= 8) {
-                    logHtml = "<strong>SOTTO COPPIA</strong><br>Frizione agganciata. Il motore fa fatica (pochi Nm). Tienilo su di giri!";
+                    logHtml = "<strong>PRESA DIRETTA</strong><br>Il motore spinge il telaio, osserva la temperatura salire con l'aumento dei giri.";
                 } else if (rpmDisp > CLUTCH_BITE) {
                     logHtml = "<strong>ATTACCO FRIZIONE</strong><br>I ceppi si espandono e mordono la campana.";
                 } else {
-                    logHtml = "<strong>AL MINIMO</strong><br>La pompa dell'acqua gira piano. Riscalda il motore prima di accelerare a fondo.";
+                    logHtml = "<strong>AL MINIMO</strong><br>Motore in folle. L'acqua si sta scaldando lentamente per arrivare a temperatura ottimale (50°).";
                 }
             }
             if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
@@ -409,9 +406,8 @@
             ctx.fillStyle = "#0c0f17"; 
             ctx.fillRect(cx - pistW/2 - 4, cylTop, pistW + 8, cy - cylTop);
 
-            // LIQUIDO DI RAFFREDDAMENTO (Cambia colore col calore!)
-            let heatRatio = Math.max(0, Math.min(1, (temp - 20) / 70)); // 0 a 20°, 1 a 90°
-            // Interpola da Blu (freddo) a Rosso (bollente)
+            // LIQUIDO DI RAFFREDDAMENTO (Grafica Dinamica Calore)
+            let heatRatio = Math.max(0, Math.min(1, (temp - 20) / 70));
             let r = Math.floor(2 + (230 * heatRatio));
             let g = Math.floor(132 - (100 * heatRatio));
             let b = Math.floor(199 - (150 * heatRatio));
