@@ -3,179 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Rok Junior 125cc - Pro Edition</title>
+    <title>Vortex Rok 125 - Ultra Realism Simulator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #060709;
-            --panel-bg: #12141c;
-            --text-main: #f3f4f6;
-            --text-muted: #8a94a6;
-            --accent-blue: #38bdf8;   
-            --accent-green: #34d399;
-            --accent-orange: #fb923c; 
-            --accent-red: #ef4444;    
-            --border-color: #242936;
+            --bg-color: #060709; --panel-bg: #12141c; --text-main: #f3f4f6;
+            --text-muted: #8a94a6; --accent-blue: #38bdf8; --accent-green: #34d399;
+            --accent-orange: #fb923c; --accent-red: #ef4444; --border-color: #242936;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Inter', sans-serif; background-color: var(--bg-color);
+            color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column;
             background-image: radial-gradient(circle at 50% -10%, #1e293b 0%, var(--bg-color) 80%);
             overflow-x: hidden;
         }
 
         header {
-            padding: 1.5rem 1rem;
-            text-align: center;
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(6, 7, 9, 0.85);
-            backdrop-filter: blur(12px);
-            z-index: 10;
+            padding: 1rem; text-align: center; border-bottom: 1px solid var(--border-color);
+            background: rgba(6, 7, 9, 0.9); z-index: 10;
         }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.3rem;
-            background: linear-gradient(135deg, #ffffff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+        .subtitle { font-size: 0.8rem; color: var(--accent-orange); letter-spacing: 1px; font-weight: 600; text-transform: uppercase; }
 
-        .subtitle { font-size: 0.85rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            max-width: 1300px;
-            margin: 1.5rem auto;
-            gap: 1.5rem;
-            padding: 0 1rem;
-            flex: 1;
-        }
+        .container { display: flex; flex-wrap: wrap; max-width: 1400px; margin: 1.5rem auto; gap: 1.5rem; padding: 0 1rem; flex: 1; }
 
         .animation-section {
-            flex: 1 1 500px;
-            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
-            border-radius: 16px;
-            padding: 1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: inset 0 0 60px rgba(0,0,0,0.9), 0 10px 30px rgba(0,0,0,0.7);
-            border: 1px solid var(--border-color);
-            position: relative;
+            flex: 1 1 550px; background: radial-gradient(circle at center, #111827 0%, #020617 100%);
+            border-radius: 16px; padding: 1rem; display: flex; justify-content: center; align-items: center;
+            box-shadow: inset 0 0 80px rgba(0,0,0,1), 0 10px 40px rgba(0,0,0,0.8);
+            border: 1px solid #1e293b; position: relative;
         }
 
-        canvas { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+        canvas { max-width: 100%; height: auto; display: block; filter: contrast(1.1) saturate(1.1); }
 
-        @keyframes rev-limiter-shake {
-            0% { transform: translate(2px, 1px) rotate(0deg); }
-            50% { transform: translate(-2px, -1px) rotate(0.4deg); }
-            100% { transform: translate(1px, -2px) rotate(0deg); }
-        }
-        .limiter-active { animation: rev-limiter-shake 0.01s infinite; filter: drop-shadow(0 0 20px rgba(239,68,68,0.4)); }
+        .controls-section { flex: 1 1 400px; display: flex; flex-direction: column; gap: 1rem; }
 
-        .controls-section {
-            flex: 1 1 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
+        .panel { background: var(--panel-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); position: relative; }
+        .panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--accent-blue), var(--accent-red)); }
 
-        .panel {
-            background: var(--panel-bg);
-            padding: 1.5rem;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            position: relative;
-        }
-
-        .panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 3px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-red));
-        }
-
-        .panel h2 {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            margin-bottom: 1.2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .panel h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); }
 
         .engine-switch {
             background: #334155; border: 1px solid #475569; color: #fff; padding: 8px 16px;
-            font-size: 0.8rem; font-weight: 800; text-transform: uppercase; border-radius: 6px;
-            cursor: pointer; transition: all 0.2s ease; letter-spacing: 1px;
+            font-size: 0.8rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
-        .engine-switch.on { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+        .engine-switch.on { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
         .engine-switch.broken { background: var(--accent-red); border-color: #f87171; animation: pulse 1s infinite; }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        .rpm-display-wrapper {
-            display: flex; align-items: baseline; justify-content: flex-end; gap: 8px;
-            margin-bottom: 1rem; background: #0b0f19; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);
-        }
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
 
-        .rpm-display { font-family: 'JetBrains Mono', monospace; font-size: 3.8rem; font-weight: 800; color: var(--accent-blue); line-height: 1; font-variant-numeric: tabular-nums; }
-        .rpm-unit { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--text-muted); font-weight: 700; }
+        .display-box { background: #0b0f19; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: flex-end; }
+        .display-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; align-self: flex-start; margin-bottom: 0.5rem; }
+        .display-value { font-family: 'JetBrains Mono', monospace; font-size: 3rem; font-weight: 800; line-height: 1; }
+        .display-value.rpm { color: var(--accent-blue); }
+        .display-value.speed { color: var(--accent-orange); }
 
-        .temp-container {
-            background: #0b0f19; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;
-        }
-        .temp-header { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; }
-        .temp-bar-bg { width: 100%; height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; }
-        .temp-bar-fill { width: 0%; height: 100%; background: var(--accent-blue); transition: width 0.1s linear; }
+        .bar-container { width: 100%; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
+        .bar-fill { height: 100%; transition: width 0.1s linear; }
+        .bar-fill.rpm { background: linear-gradient(90deg, var(--accent-blue), var(--accent-red)); }
+        .bar-fill.speed { background: linear-gradient(90deg, var(--accent-orange), var(--accent-green)); }
 
-        .pedals-container { display: flex; gap: 1rem; margin-top: 1rem; }
+        .pedals-container { display: flex; gap: 1rem; margin-top: 0.5rem; }
         .pedal {
             flex: 1; padding: 1.5rem 1rem; text-align: center; border-radius: 10px; font-weight: 800; font-size: 1.2rem;
-            letter-spacing: 1px; cursor: pointer; user-select: none; transition: all 0.1s;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.4); opacity: 0.2; pointer-events: none;
+            letter-spacing: 1px; cursor: pointer; user-select: none; transition: 0.1s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.6); opacity: 0.3; pointer-events: none;
         }
         .pedal.active { opacity: 1; pointer-events: auto; }
-        .pedal:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0); filter: brightness(1.1); }
-
-        .gas-pedal { background: var(--accent-green); color: #0f172a; border: 1px solid #6ee7b7; }
+        .pedal:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0); filter: brightness(1.2); }
+        .gas-pedal { background: var(--accent-green); color: #022c22; border: 1px solid #6ee7b7; }
         .brake-pedal { background: var(--accent-red); color: #fff; border: 1px solid #f87171; }
 
-        .dynamic-phase { font-size: 0.95rem; line-height: 1.5; padding: 1.2rem; background: rgba(0,0,0,0.3); border-left: 4px solid var(--text-muted); border-radius: 0 8px 8px 0; min-height: 110px; }
-        .dynamic-phase strong { font-weight: 600; color: #fff; }
+        .physics-log { font-size: 0.85rem; line-height: 1.6; padding: 1rem; background: rgba(0,0,0,0.4); border-left: 3px solid var(--accent-orange); border-radius: 0 8px 8px 0; margin-top: 1rem; font-family: 'JetBrains Mono', monospace; color: #cbd5e1; min-height: 90px; }
+        .physics-log strong { color: #fff; }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1.2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-muted); }
-        .stat-value { color: #fff; font-weight: 700; font-size: 1rem; }
-
-        @media (max-width: 900px) {
-            .container { flex-direction: column; }
-            .rpm-display { font-size: 3rem; }
-        }
+        @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Vortex Rok Junior 125cc</h1>
-        <div class="subtitle">Rendering Cilindro Realistico • Anti-Crash Hardware Level</div>
+        <h1>Vortex Rok 125cc</h1>
+        <div class="subtitle">Physics Engine: Carico Asfalto & Grafica Ultra-Realistica</div>
     </header>
 
     <main class="container">
@@ -184,24 +100,22 @@
         </section>
 
         <section class="controls-section">
-            <div class="panel" id="rpmPanel">
-                <h2>
-                    Telemetria OTK
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Telemetria Dinamica</h2>
                     <button class="engine-switch" id="engineBtn">Start</button>
-                </h2>
-                
-                <div class="rpm-display-wrapper">
-                    <div class="rpm-display" id="rpmValue">0</div>
-                    <div class="rpm-unit">RPM</div>
                 </div>
-
-                <div class="temp-container">
-                    <div class="temp-header">
-                        <span>TEMPERATURA GRUPPO TERMICO</span>
-                        <span id="tempValue">20 °C</span>
+                
+                <div class="dash-grid">
+                    <div class="display-box">
+                        <div class="display-label">Giri Motore (RPM)</div>
+                        <div class="display-value rpm" id="rpmValue">0</div>
+                        <div class="bar-container"><div class="bar-fill rpm" id="rpmBar" style="width: 0%"></div></div>
                     </div>
-                    <div class="temp-bar-bg">
-                        <div class="temp-bar-fill" id="tempBar"></div>
+                    <div class="display-box">
+                        <div class="display-label">Velocità Asse (KM/H)</div>
+                        <div class="display-value speed" id="speedValue">0</div>
+                        <div class="bar-container"><div class="bar-fill speed" id="speedBar" style="width: 0%"></div></div>
                     </div>
                 </div>
                 
@@ -210,18 +124,8 @@
                     <div class="pedal gas-pedal" id="gasPedal">GAS</div>
                 </div>
 
-                <div class="stats-grid">
-                    <div>Stato Frizione:<br><span class="stat-value" id="clutchState">Staccata</span></div>
-                    <div>Valvola Scarico:<br><span class="stat-value" id="valveState">Chiusa</span></div>
-                    <div>Stato Termico:<br><span class="stat-value" id="thermalState">Freddo</span></div>
-                    <div>Diagnostica ECU:<br><span class="stat-value" id="statusValue">Spento</span></div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2>Analisi Comportamento Rok</h2>
-                <div class="dynamic-phase" id="dynamicText">
-                    Motore spento nei box. Premi Start per avviare il motorino d'avviamento elettrico integrato.
+                <div class="physics-log" id="physicsText">
+                    Kart fermo ai box. Premi <strong>START</strong> per avviare.
                 </div>
             </div>
         </section>
@@ -231,442 +135,430 @@
         const canvas = document.getElementById('engineCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Elementi DOM
         const rpmDisplay = document.getElementById('rpmValue');
-        const tempDisplay = document.getElementById('tempValue');
-        const tempBar = document.getElementById('tempBar');
-        const dynamicText = document.getElementById('dynamicText');
-        const canvasContainer = document.getElementById('canvasContainer');
-        const clutchStateDisp = document.getElementById('clutchState');
-        const valveStateDisp = document.getElementById('valveState');
-        const thermalStateDisp = document.getElementById('thermalState');
-        const statusValue = document.getElementById('statusValue');
+        const speedDisplay = document.getElementById('speedValue');
+        const rpmBar = document.getElementById('rpmBar');
+        const speedBar = document.getElementById('speedBar');
+        const physicsText = document.getElementById('physicsText');
         const engineBtn = document.getElementById('engineBtn');
         const gasPedal = document.getElementById('gasPedal');
         const brakePedal = document.getElementById('brakePedal');
 
-        // Costanti meccaniche fisse
-        const cx = 300, cy = 520, crankRadius = 54, conrodLen = 132, pistW = 96, pistH = 80, cylTop = 190;       
+        // Parametri Meccanici e Visivi
+        const cx = 300, cy = 520, crankRadius = 54, conrodLen = 132, pistW = 94, pistH = 75, cylTop = 200;       
 
+        // Stato Motore e Fisica
         let angle = 0;
         let isEngineRunning = false;
-        let damageType = null; 
-        let currentRpm = 0;           
+        let isBroken = false;
+        
+        let engineRpm = 0;
+        let speedKmh = 0;
+        
         const MIN_RPM = 2800; 
-        const MAX_ROK_RPM = 13800; 
-        const AMBIENT_TEMP = 20;
-        let currentTemp = AMBIENT_TEMP;
+        const MAX_RPM = 13800;
+        const MAX_SPEED = 115; // Velocità a 13800 RPM (Rapporto Z11/Z80)
+        const CLUTCH_BITE = 4200; // RPM a cui la frizione inizia a far presa
+        const RPM_PER_KMH = MAX_RPM / MAX_SPEED; // ~120 RPM ogni 1 km/h in presa diretta
 
         let gasPressed = false;
         let brakePressed = false;
-        let isLimiterCutActive = false; 
 
-        let cachedState = { temp: -1, clutch: "", valve: "" };
-
-        function updateDom(element, property, value, isHtml = false) {
-            if (!element) return;
-            if (property === 'class') {
-                if (element.className !== value) element.className = value;
-            } else if (isHtml) {
-                if (element.innerHTML !== value) element.innerHTML = value;
-            } else {
-                if (element.textContent !== value) element.textContent = value;
-            }
-        }
-
+        // Gestione Input
         function bindPedal(element, isGas) {
-            const press = (e) => { 
-                e.preventDefault(); 
-                if(isEngineRunning && !damageType) { if(isGas) gasPressed = true; else brakePressed = true; } 
-            };
-            const release = (e) => { 
-                e.preventDefault(); 
-                if(isGas) gasPressed = false; else brakePressed = false; 
-            };
-            element.addEventListener('mousedown', press);
-            element.addEventListener('mouseup', release);
-            element.addEventListener('mouseleave', release);
+            const press = (e) => { e.preventDefault(); if(isEngineRunning && !isBroken) { if(isGas) gasPressed = true; else brakePressed = true; } };
+            const release = (e) => { e.preventDefault(); if(isGas) gasPressed = false; else brakePressed = false; };
+            element.addEventListener('mousedown', press); element.addEventListener('mouseup', release); element.addEventListener('mouseleave', release);
             try { element.addEventListener('touchstart', press, {passive: false}); } catch(err) { element.addEventListener('touchstart', press); }
             try { element.addEventListener('touchend', release, {passive: false}); } catch(err) { element.addEventListener('touchend', release); }
         }
-        bindPedal(gasPedal, true);
-        bindPedal(brakePedal, false);
+        bindPedal(gasPedal, true); bindPedal(brakePedal, false);
 
         engineBtn.addEventListener('click', () => {
-            if (damageType) {
-                damageType = null;
-                currentTemp = 55;
-                currentRpm = 0;
-                isEngineRunning = false;
-                spegniInterfacce();
+            if (isBroken) {
+                isBroken = false; engineRpm = 0; speedKmh = 0; isEngineRunning = false;
+                gasPedal.classList.remove('active'); brakePedal.classList.remove('active');
+                engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
                 return;
             } 
             isEngineRunning = !isEngineRunning;
             if (isEngineRunning) {
-                gasPedal.classList.add('active');
-                brakePedal.classList.add('active');
+                gasPedal.classList.add('active'); brakePedal.classList.add('active');
+                engineBtn.textContent = "Stop"; engineBtn.className = "engine-switch on";
             } else {
-                spegniInterfacce();
+                gasPedal.classList.remove('active'); brakePedal.classList.remove('active');
+                gasPressed = false; brakePressed = false;
+                engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
             }
         });
 
-        function spegniInterfacce() {
-            gasPedal.classList.remove('active');
-            brakePedal.classList.remove('active');
-            gasPressed = false;
-            brakePressed = false;
-            isLimiterCutActive = false;
-        }
+        // ==========================================
+        // MOTORE FISICO (Calcolo Inerzia e Carico)
+        // ==========================================
+        function updatePhysics() {
+            if (!isEngineRunning) {
+                engineRpm -= engineRpm * 0.1;
+                speedKmh -= speedKmh * 0.02;
+                return;
+            }
 
-        function safeAlpha(value) {
-            if (isNaN(value) || value < 0) return "0.000";
-            if (value > 1) return "1.000";
-            return value.toFixed(3);
-        }
+            let aeroDrag = (speedKmh * speedKmh) * 0.00015; // Resistenza dell'aria cresce col quadrato della velocità
+            let rollingDrag = 0.2; // Attrito pneumatici
 
-        // Loop di rendering
-        function draw(time) {
-            try {
-                time = (typeof time === 'number' && !isNaN(time)) ? time : performance.now();
+            if (speedKmh < 5) { 
+                // FASE 1: FRIZIONE STACCATA / IN SLITTAMENTO (Il motore sale di giri velocemente)
+                if (gasPressed) {
+                    engineRpm += 400; // Sgasata libera
+                    if (engineRpm > 6000) engineRpm = 6000; // Il carico inizia a limitare
 
-                // 1. FISICA DEL MOTORE
-                let targetRpm = 0;
-                let accelerationFactor = 0.06; 
-
-                if (isEngineRunning && !damageType) {
-                    if (gasPressed) {
-                        if (!isLimiterCutActive) {
-                            targetRpm = MAX_ROK_RPM + 200;
-                            if (currentRpm >= MAX_ROK_RPM) isLimiterCutActive = true; 
-                        } else {
-                            targetRpm = MAX_ROK_RPM - 500; 
-                            if (currentRpm <= MAX_ROK_RPM - 400) isLimiterCutActive = false; 
-                        }
-                    } else if (brakePressed) {
-                        targetRpm = MIN_RPM; accelerationFactor = 0.3; 
-                    } else {
-                        targetRpm = MIN_RPM + (Math.sin(time * 0.01) * 40); 
+                    if (engineRpm > CLUTCH_BITE) {
+                        // La frizione attacca: il kart inizia a muoversi, i giri "soffrono" il peso
+                        speedKmh += 0.35; 
+                        engineRpm -= 200; // Calo di giri realistico sotto sforzo
                     }
-                    currentRpm += (targetRpm - currentRpm) * accelerationFactor;
+                } else if (brakePressed) {
+                    speedKmh = 0;
+                    engineRpm += (MIN_RPM - engineRpm) * 0.15;
                 } else {
-                    currentRpm += (0 - currentRpm) * 0.1;
+                    speedKmh -= rollingDrag;
+                    engineRpm += (MIN_RPM - engineRpm) * 0.1;
                 }
-                
-                if (isNaN(currentRpm) || !isFinite(currentRpm) || currentRpm < 20) currentRpm = 0;
-                const displayRpm = Math.round(currentRpm);
+                if (speedKmh < 0) speedKmh = 0;
 
-                // 2. TERMODINAMICA
-                if (isEngineRunning && !damageType) {
-                    let heatGen = Math.pow(currentRpm / 11000, 2) * (gasPressed ? 0.38 : 0.06);
-                    let cooling = 0.01 + (currentRpm / 13800) * 0.05 + (currentTemp - AMBIENT_TEMP) * 0.0015;
-                    currentTemp += (heatGen - cooling);
+            } else {
+                // FASE 2: FRIZIONE IN PRESA DIRETTA (RPM legati rigidamente alla ruota)
+                if (gasPressed) {
+                    // Curva di coppia: il motore spinge di più quando la valvola apre (>8800 rpm)
+                    let torque = (engineRpm > 8800) ? 1.8 : 0.9;
+                    let acceleration = torque - aeroDrag - rollingDrag;
+                    speedKmh += acceleration;
+                } else if (brakePressed) {
+                    speedKmh -= 2.5; // Frenata forte (freni a disco idraulici)
                 } else {
-                    currentTemp -= (currentTemp - AMBIENT_TEMP) * 0.002;
+                    speedKmh -= (aeroDrag + rollingDrag + 0.3); // Freno motore + attriti
                 }
                 
-                if (isNaN(currentTemp) || !isFinite(currentTemp) || currentTemp < AMBIENT_TEMP) currentTemp = AMBIENT_TEMP;
-                const displayTemp = Math.round(currentTemp);
+                if (speedKmh > MAX_SPEED) speedKmh = MAX_SPEED;
+                if (speedKmh < 0) speedKmh = 0;
 
-                // 3. LOGICA STATI DI DIASGNOSTICA
-                let valveOpen = (displayRpm >= 8800);
-                let clutchState = "Staccata"; let clutchColor = "var(--text-muted)";
-                if (displayRpm > 4500) { clutchState = "In Presa Diretta"; clutchColor = "var(--accent-green)"; }
-                else if (displayRpm > 2900) { clutchState = "Slittamento"; clutchColor = "var(--accent-orange)"; }
+                // Calcolo matematico diretto RPM asse
+                let targetRpm = speedKmh * RPM_PER_KMH;
+                engineRpm += (targetRpm - engineRpm) * 0.5; // Sincronizzazione fluida
+            }
 
-                if (isEngineRunning && !damageType) {
-                    if (currentTemp < 45 && displayRpm > 11500 && gasPressed && Math.random() < 0.004) { damageType = "freddo"; isEngineRunning = false; spegniInterfacce(); }
-                    if (currentTemp >= 95) { damageType = "caldo"; isEngineRunning = false; spegniInterfacce(); }
+            // Limiti di sicurezza hardware
+            if (engineRpm > MAX_RPM) engineRpm = MAX_RPM;
+            if (engineRpm < MIN_RPM && isEngineRunning && speedKmh < 2) engineRpm = MIN_RPM;
+        }
+
+        // ==========================================
+        // AGGIORNAMENTO UI
+        // ==========================================
+        function updateUI() {
+            let rpmDisp = Math.round(engineRpm);
+            let speedDisp = Math.floor(speedKmh);
+
+            rpmDisplay.textContent = rpmDisp;
+            speedDisplay.textContent = speedDisp;
+
+            rpmBar.style.width = (rpmDisp / MAX_RPM) * 100 + "%";
+            speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
+
+            let logHtml = "";
+            if (!isEngineRunning) {
+                logHtml = "Motore spento.";
+            } else {
+                if (rpmDisp > 8800) {
+                    logHtml = "<strong>VALVOLA SCARICO APERTA</strong><br>Coppia massima erogata. Resistenza aerodinamica in aumento.";
+                } else if (speedKmh >= 5) {
+                    logHtml = "<strong>PRESA DIRETTA</strong><br>Frizione agganciata. Il motore spinge contro il carico dell'asfalto e inerzia del kart.";
+                } else if (rpmDisp > CLUTCH_BITE) {
+                    logHtml = "<strong>SLITTAMENTO FRIZIONE</strong><br>Ganasce in attrito. Senti il motore scendere di giri a causa del peso!";
+                } else {
+                    logHtml = "<strong>MINIMO</strong><br>Frizione staccata. Motore libero da carichi.";
                 }
+            }
+            if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
+        }
 
-                // 4. AGGIORNAMENTO AGGREGATO DEL DOM
-                updateDom(rpmDisplay, 'text', displayRpm);
-                if (cachedState.temp !== displayTemp) {
-                    tempDisplay.textContent = displayTemp + " °C";
-                    tempBar.style.width = Math.min(100, Math.max(0, ((displayTemp - AMBIENT_TEMP) / 80) * 100)) + "%";
-                    cachedState.temp = displayTemp;
-                    if (displayTemp < 48) { thermalStateDisp.textContent = "Freddo (<48°C)"; thermalStateDisp.style.color = "var(--accent-blue)"; tempBar.style.backgroundColor = "var(--accent-blue)"; }
-                    else if (displayTemp <= 68) { thermalStateDisp.textContent = "Ottimale Rok"; thermalStateDisp.style.color = "var(--accent-green)"; tempBar.style.backgroundColor = "var(--accent-green)"; }
-                    else { thermalStateDisp.textContent = "Surriscaldato"; thermalStateDisp.style.color = "var(--accent-red)"; tempBar.style.backgroundColor = "var(--accent-red)"; }
-                }
-                if (cachedState.clutch !== clutchState) { clutchStateDisp.textContent = clutchState; clutchStateDisp.style.color = clutchColor; cachedState.clutch = clutchState; }
-                if (cachedState.valve !== (valveOpen ? "Aperta" : "Chiusa")) { valveStateDisp.textContent = valveOpen ? "Aperta (Coppia)" : "Chiusa"; valveStateDisp.style.color = valveOpen ? "var(--accent-orange)" : "var(--text-muted)"; cachedState.valve = valveOpen ? "Aperta" : "Chiusa"; }
+        // ==========================================
+        // MOTORE GRAFICO 2D (Iper-Realismo)
+        // ==========================================
+        function draw(time) {
+            updatePhysics();
+            updateUI();
 
-                let nextStatus = "Spento", nextDynamic = "Motore spento nei box. Premi Start.", nextBtnText = "Start", nextBtnClass = "engine-switch", nextContainerClass = "animation-section";
-                if (damageType) {
-                    nextBtnClass = "engine-switch broken"; nextBtnText = "RIPARA MOTORE";
-                    if (damageType === "freddo") { nextStatus = "GRIPPAGGIO A FREDDO"; nextDynamic = "<strong>MOTORE SEQUESTRATO:</strong> Hai accelerato al massimo a motore freddo! Clicca su <strong>RIPARA MOTORE</strong>."; }
-                    else { nextStatus = "MOTORE COTTO"; nextDynamic = "<strong>GRIPPAGGIO TERMICO:</strong> Temperatura oltre i 95°C. Clicca su <strong>RIPARA MOTORE</strong>."; }
-                } else if (isEngineRunning) {
-                    nextBtnText = "Stop"; nextBtnClass = "engine-switch on";
-                    if (isLimiterCutActive) { nextContainerClass = "animation-section limiter-active"; nextStatus = "LIMITATORE ECU (13.8k)"; nextDynamic = "<strong>LIMITATORE ATTIVO:</strong> Sfarfallio della centralina originale Rok."; }
-                    else if (valveOpen) { nextStatus = "Valvola Aperta"; nextDynamic = "<strong>PIENA COPPIA:</strong> La valvola di scarico pneumatica è aperta a 8.800 RPM."; }
-                    else if (displayRpm > MIN_RPM + 200) { nextStatus = "In Trazione"; nextDynamic = "<strong>ACCELERAZIONE:</strong> Frizione innestata sul tamburo."; }
-                    else { nextStatus = "Minimo Regolare"; nextDynamic = "<strong>AL MINIMO:</strong> Il motore gira da solo a circa 2.800 giri."; }
-                }
+            // Calcolo Angolo Manovella
+            if (engineRpm > 0) {
+                angle += (engineRpm / 60) * 0.075; 
+                if (angle >= Math.PI * 2) angle -= Math.PI * 2;
+            }
+            
+            // Cinematica
+            const crankX = cx + crankRadius * Math.sin(angle);
+            const crankY = cy - crankRadius * Math.cos(angle);
+            let deltaX = Math.abs(crankX - cx); if (deltaX > conrodLen) deltaX = conrodLen;
+            const pistY = crankY - Math.sqrt(Math.pow(conrodLen, 2) - Math.pow(deltaX, 2));
 
-                updateDom(engineBtn, 'text', nextBtnText); updateDom(engineBtn, 'class', nextBtnClass); updateDom(canvasContainer, 'class', nextContainerClass);
-                updateDom(statusValue, 'text', nextStatus);
-                if (statusValue.textContent === "LIMITATORE ECU (13.8k)" || statusValue.textContent === "GRIPPAGGIO A FREDDO" || statusValue.textContent === "MOTORE COTTO") statusValue.style.color = "var(--accent-red)"; else if (statusValue.textContent === "Valvola Aperta") statusValue.style.color = "var(--accent-orange)"; else statusValue.style.color = "var(--accent-blue)";
-                updateDom(dynamicText, 'html', nextDynamic, true);
-
-                // 5. CINEMATICA (Messa in sicurezza)
-                if (currentRpm > 0) {
-                    angle += (currentRpm / 60) * 0.075; 
-                    if (angle >= Math.PI * 2) angle -= Math.PI * 2;
-                }
-                if (isNaN(angle)) angle = 0;
-
-                const crankX = cx + crankRadius * Math.sin(angle);
-                const crankY = cy - crankRadius * Math.cos(angle);
-                
-                let deltaX = Math.abs(crankX - cx);
-                if (deltaX > conrodLen) deltaX = conrodLen;
-                const pistY = crankY - Math.sqrt(Math.pow(conrodLen, 2) - Math.pow(deltaX, 2));
-
-                // 6. DISGNO GRAPHIC SYSTEM
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawFluids(pistY, angle, currentRpm); 
-                drawEngineBlock(currentTemp, valveOpen); // <-- Il cuore del nuovo design grafico realista
-                drawMovingParts(pistY, crankX, crankY, angle); 
-
-                if (isEngineRunning && currentRpm > 100 && !isLimiterCutActive && !damageType) {
-                    if (angle < 0.25 || angle > Math.PI * 2 - 0.25) drawSpark();
-                }
-
-            } catch (err) {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "red";
-                ctx.font = "16px monospace";
-                ctx.fillText("Crash intercettato dall'algoritmo di sicurezza:", 20, 40);
-                ctx.fillStyle = "white";
-                ctx.fillText(err.message, 20, 70);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawEngineBlockAndCooling(engineRpm > 8800);
+            drawCombustion(pistY, angle, engineRpm);
+            drawMovingParts(pistY, crankX, crankY);
+            
+            if (isEngineRunning && engineRpm > 500) {
+                if (angle < 0.25 || angle > Math.PI * 2 - 0.25) drawRealisticSpark();
             }
 
             requestAnimationFrame(draw);
         }
 
-        function drawFluids(pistY, angle, rpm) {
-            const pistTop = pistY - pistH/2;
-            let fillHeight = Math.max(0, pistTop - cylTop);
-            if (isNaN(fillHeight)) fillHeight = 0;
-            
-            // Canna interna brunita
+        function drawEngineBlockAndCooling(valveOpen) {
+            // 1. BLOCCO ESTERNO E INTERCAPEDINI ACQUA (Water Jacket)
+            // L'acqua circonda la canna del cilindro (colore blu/azzurro)
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(cx - 100, cylTop + 10, 200, cy - cylTop - 80);
+
+            // Canna del cilindro (metallo scuro brunito)
             ctx.fillStyle = "#0c0f17"; 
-            ctx.fillRect(cx - 48, cylTop, 96, fillHeight);
-            
-            if (rpm < 100 || damageType) return;
-            const intensity = Math.min(1, Math.max(0, rpm / 12000));
+            ctx.fillRect(cx - pistW/2 - 4, cylTop, pistW + 8, cy - cylTop);
 
-            if (angle >= 0 && angle < 0.8) {
-                const fire = ctx.createRadialGradient(cx, cylTop, 2, cx, cylTop + 50, 100);
-                fire.addColorStop(0, "#ffffff");
-                fire.addColorStop(0.2, "#fecdd3");
-                fire.addColorStop(0.5, "var(--accent-orange)");
-                fire.addColorStop(1, "rgba(0,0,0,0)");
-                ctx.fillStyle = fire;
-                ctx.fillRect(cx - 48, cylTop, 96, fillHeight);
-            } 
-            else if (angle >= 0.8 && angle <= Math.PI) {
-                ctx.fillStyle = `rgba(100, 116, 139, ${safeAlpha(0.35 * intensity)})`;
-                ctx.fillRect(cx - 48, cylTop, 96, fillHeight);
-                
-                const exhaustGrad = ctx.createLinearGradient(cx + 48, 0, cx + 160, 0);
-                exhaustGrad.addColorStop(0, `rgba(241, 245, 249, ${safeAlpha(0.5 * intensity)})`);
-                exhaustGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-                ctx.fillStyle = exhaustGrad;
-                ctx.beginPath();
-                ctx.moveTo(cx + 48, 220); ctx.lineTo(cx + 150, 195);
-                ctx.lineTo(cx + 150, 275); ctx.lineTo(cx + 48, 260);
-                ctx.fill();
-            } 
-            else if (angle > Math.PI && angle < 4.9) {
-                ctx.fillStyle = `rgba(56, 189, 248, ${safeAlpha(0.3 * intensity)})`;
-                ctx.fillRect(cx - 48, cylTop, 96, fillHeight);
-            } 
-            else {
-                let comp = (angle - 4.9) / (Math.PI * 2 - 4.9);
-                if (isNaN(comp) || comp < 0) comp = 0; if (comp > 1) comp = 1;
-                ctx.fillStyle = `rgba(56, 189, 248, ${safeAlpha(0.15 + (comp * 0.45) * intensity)})`;
-                ctx.fillRect(cx - 48, cylTop, 96, fillHeight);
-            }
+            // Liquido di raffreddamento (sezioni laterali)
+            const waterGrad = ctx.createLinearGradient(0, cylTop, 0, cy - 80);
+            waterGrad.addColorStop(0, "#0284c7"); // Blu acceso
+            waterGrad.addColorStop(1, "#082f49"); // Blu scuro profondo
+            ctx.fillStyle = waterGrad;
+            ctx.fillRect(cx - 95, cylTop + 15, 35, cy - cylTop - 95); // Sinistra
+            ctx.fillRect(cx + 60, cylTop + 15, 35, cy - cylTop - 95); // Destra
 
-            ctx.fillStyle = `rgba(56, 189, 248, ${safeAlpha(0.1 * intensity)})`;
-            ctx.beginPath(); ctx.arc(cx, cy, 52, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // NUOVA FUNZIONE GRAFICA REALISTICA PER IL CILINDRO
-        function drawEngineBlock(temp, valveOpen) {
-            let factor = (temp - 40) / 55;
-            if (isNaN(factor) || factor < 0) factor = 0; if (factor > 1) factor = 1;
-            
-            const heatR = Math.floor(factor * 160);
-            const heatG = Math.floor(factor * 40);
-
-            // 1. STRUTTURA ESTERNA CILINDRO (Sfumatura metallo pressofuso satinato)
-            let metalGrad = ctx.createLinearGradient(cx - 80, 0, cx + 80, 0);
-            metalGrad.addColorStop(0, "#1e293b");
-            metalGrad.addColorStop(0.2, "#334155");
-            metalGrad.addColorStop(0.5, "#64748b");
-            metalGrad.addColorStop(0.8, "#334155");
-            metalGrad.addColorStop(1, "#1e293b");
-
-            ctx.fillStyle = metalGrad;
-            // Bordo esterno strutturale con variazione di colore legata al calore
-            ctx.strokeStyle = `rgb(${Math.floor(71 + heatR)}, ${Math.floor(85 - heatG)}, 105)`;
-            ctx.lineWidth = 5;
-            ctx.lineJoin = "round";
-
-            ctx.beginPath();
-            ctx.moveTo(cx - 68, cy - 80);
-            ctx.lineTo(cx - 68, cylTop);
-            ctx.lineTo(cx + 68, cylTop);
-            ctx.lineTo(cx + 68, cy - 80);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            // 2. ALETTE DI RAFFREDDAMENTO (Look geometrico 3D dei motori 2T racing)
-            ctx.lineWidth = 2;
-            for (let y = cylTop + 25; y < cy - 100; y += 22) {
-                // Sfumatura speculare per le alette
-                let finGradL = ctx.createLinearGradient(cx - 95, 0, cx - 68, 0);
-                finGradL.addColorStop(0, "#0f172a"); finGradL.addColorStop(1, "#475569");
-                ctx.fillStyle = finGradL;
-                ctx.strokeStyle = "#1e293b";
-                ctx.beginPath();
-                ctx.roundRect(cx - 92, y, 24, 7, 3);
-                ctx.fill(); ctx.stroke();
-
-                // Alette destra (interrotte spazialmente dove si innesca lo scarico)
-                if (y < 195 || y > 275) {
-                    let finGradR = ctx.createLinearGradient(cx + 68, 0, cx + 95, 0);
-                    finGradR.addColorStop(0, "#475569"); finGradR.addColorStop(1, "#0f172a");
-                    ctx.fillStyle = finGradR;
-                    ctx.beginPath();
-                    ctx.roundRect(cx + 68, y, 24, 7, 3);
-                    ctx.fill(); ctx.stroke();
-                }
-            }
-
-            // 3. TESTATA MOTORE (CNC Ergal Alluminio)
-            let headGrad = ctx.createLinearGradient(cx - 75, 0, cx + 75, 0);
-            headGrad.addColorStop(0, "#334155");
-            headGrad.addColorStop(0.3, "#475569");
+            // 2. TESTATA CON BANDA DI SQUISH
+            const headGrad = ctx.createLinearGradient(cx - 100, 0, cx + 100, 0);
+            headGrad.addColorStop(0, "#475569");
             headGrad.addColorStop(0.5, "#94a3b8");
-            headGrad.addColorStop(0.7, "#475569");
             headGrad.addColorStop(1, "#334155");
             
             ctx.fillStyle = headGrad;
-            ctx.strokeStyle = `rgb(${Math.floor(71 + heatR * 1.2)}, ${Math.floor(85 - heatG)}, 105)`;
             ctx.beginPath();
-            ctx.moveTo(cx - 72, cylTop);
-            ctx.lineTo(cx - 72, cylTop - 25);
-            ctx.lineTo(cx - 45, cylTop - 45);
-            ctx.lineTo(cx + 45, cylTop - 45);
-            ctx.lineTo(cx + 72, cylTop - 25);
-            ctx.lineTo(cx + 72, cylTop);
+            // Disegno sagomato della testata CNC
+            ctx.moveTo(cx - 100, cylTop + 10);
+            ctx.lineTo(cx - 100, cylTop - 30);
+            ctx.lineTo(cx - 30, cylTop - 30); // Base candela
+            ctx.lineTo(cx + 30, cylTop - 30);
+            ctx.lineTo(cx + 100, cylTop - 30);
+            ctx.lineTo(cx + 100, cylTop + 10);
+            // La banda di squish (concavità verso il centro)
+            ctx.lineTo(cx + pistW/2, cylTop);
+            ctx.lineTo(cx + 20, cylTop - 15); // Cupola interna
+            ctx.lineTo(cx - 20, cylTop - 15);
+            ctx.lineTo(cx - pistW/2, cylTop);
             ctx.closePath();
             ctx.fill();
+            ctx.strokeStyle = "#0f172a";
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Bulloni di serraggio della testata (Dettaglio Meccanico)
-            ctx.fillStyle = "#1e293b";
-            ctx.fillRect(cx - 58, cylTop - 8, 10, 8);
-            ctx.fillRect(cx + 48, cylTop - 8, 10, 8);
+            // O-Ring di tenuta (guarnizioni in gomma nera tra testa e cilindro)
+            ctx.fillStyle = "#000";
+            ctx.beginPath(); ctx.arc(cx - pistW/2 - 2, cylTop, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx + pistW/2 + 2, cylTop, 3, 0, Math.PI*2); ctx.fill();
 
-            // Candela d'accensione iper-realistica
-            ctx.fillStyle = "#475569"; // Filettatura/Dado esagonale
-            ctx.fillRect(cx - 9, cylTop - 54, 18, 9);
-            ctx.fillStyle = "#f8fafc"; // Isolatore ceramico bianco
-            ctx.fillRect(cx - 6, cylTop - 74, 12, 20);
-            ctx.fillStyle = "#ef4444"; // Pipetta terminale rossa
+            // 3. CANDELA NGK IPER-DETTAGLIATA
+            // Corpo filettato nella testa
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(cx - 12, cylTop - 30, 24, 15);
+            // Rondella schiacciata
+            ctx.fillStyle = "#cbd5e1";
+            ctx.fillRect(cx - 14, cylTop - 32, 28, 2);
+            // Esagono per la chiave
+            ctx.fillStyle = "#64748b";
+            ctx.fillRect(cx - 16, cylTop - 45, 32, 13);
+            // Ceramica isolante bianca con nervature
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillRect(cx - 10, cylTop - 75, 20, 30);
+            ctx.fillStyle = "#e2e8f0"; // Ombre ceramica
+            ctx.fillRect(cx - 12, cylTop - 70, 24, 3);
+            ctx.fillRect(cx - 12, cylTop - 62, 24, 3);
+            // Connettore e pipetta terminale
+            ctx.fillStyle = "#fbbf24"; // Ottone
+            ctx.fillRect(cx - 4, cylTop - 80, 8, 5);
+            ctx.fillStyle = "#ef4444"; // Pipetta rossa racing
+            ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill();
+            
+            // Elettrodo centrale e di massa (dentro la camera)
+            ctx.fillStyle = "#f8fafc"; // Punta ceramica esposta
+            ctx.fillRect(cx - 4, cylTop - 15, 8, 8);
+            ctx.fillStyle = "#475569"; // Elettrodo centrale
+            ctx.fillRect(cx - 1, cylTop - 7, 2, 4);
+            // Elettrodo di massa curvo (il "gancetto")
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.roundRect(cx - 8, cylTop - 84, 16, 10, [4, 4, 0, 0]);
-            ctx.fill();
+            ctx.moveTo(cx + 8, cylTop - 15);
+            ctx.lineTo(cx + 8, cylTop - 2);
+            ctx.lineTo(cx - 1, cylTop - 2);
+            ctx.stroke();
 
-            // Bagliore termico interno della camera di scoppio (Core Glow)
-            if (factor > 0.05) {
-                ctx.fillStyle = `rgba(239, 68, 68, ${safeAlpha(factor * 0.35)})`;
-                ctx.beginPath();
-                ctx.arc(cx, cylTop, 40, 0, Math.PI, true);
-                ctx.fill();
-            }
-
-            // 4. CONDOTTO DI SCARICO AVANZATO CON VALVOLA ROK
-            let exhaustGrad = ctx.createLinearGradient(cx + 68, 230, cx + 150, 220);
-            exhaustGrad.addColorStop(0, "#334155");
-            exhaustGrad.addColorStop(0.4, "#1e293b");
+            // 4. SCARICO CARBONIZZATO E VALVOLA GHIGLIOTTINA
+            const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220);
+            exhaustGrad.addColorStop(0, "#1e293b"); // Scuro fuliggine vicino al pistone
+            exhaustGrad.addColorStop(0.5, "#334155");
             exhaustGrad.addColorStop(1, "#0f172a");
+            
             ctx.fillStyle = exhaustGrad;
             ctx.beginPath();
-            ctx.moveTo(cx + 68, 215);
-            ctx.lineTo(cx + 150, 190);
-            ctx.lineTo(cx + 150, 280);
-            ctx.lineTo(cx + 68, 265);
+            ctx.moveTo(cx + pistW/2 + 4, 215);
+            ctx.lineTo(cx + 160, 190);
+            ctx.lineTo(cx + 160, 280);
+            ctx.lineTo(cx + pistW/2 + 4, 275);
             ctx.closePath();
             ctx.fill();
-            ctx.stroke();
 
-            // Alloggiamento meccanico esterno della ghigliottina pneumatica
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = "#475569";
-            ctx.fillStyle = "#1e293b";
-            ctx.fillRect(cx + 85, 180, 22, 12);
-            ctx.strokeRect(cx + 85, 180, 22, 12);
-
-            // Ghigliottina interna mobile (Si alza e si abbassa visivamente!)
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = valveOpen ? "var(--accent-orange)" : "var(--accent-red)";
-            ctx.beginPath();
-            let slideY = valveOpen ? 200 : 228;
-            ctx.moveTo(cx + 74, slideY);
-            ctx.lineTo(cx + 74, slideY + 22);
-            ctx.stroke();
+            // Meccanismo valvola parzializzatrice ROK
+            ctx.fillStyle = "#0f172a";
+            ctx.fillRect(cx + 70, 180, 30, 25);
+            
+            // Ghigliottina in movimento 
+            ctx.fillStyle = "#94a3b8";
+            let vY = valveOpen ? 185 : 215; // Si alza fisicamente
+            ctx.fillRect(cx + 75, vY, 20, 35);
+            // Effetto bagliore arancione se la valvola è in tiro (aperta)
+            if(valveOpen) {
+                ctx.shadowColor = "var(--accent-orange)"; ctx.shadowBlur = 10;
+                ctx.strokeStyle = "var(--accent-orange)"; ctx.lineWidth = 2;
+                ctx.strokeRect(cx + 75, vY, 20, 35);
+                ctx.shadowBlur = 0;
+            }
         }
 
-        function drawMovingParts(pistY, crankX, crankY, angle) {
-            // Basamento/Albero interno background
-            ctx.beginPath(); ctx.arc(cx, cy, 56, 0, Math.PI * 2); ctx.fillStyle = "#0f172a"; ctx.fill();
-            ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.fillStyle = "#64748b"; ctx.fill();
-            
-            // Biella d'acciaio con profilo rinforzato
-            ctx.lineWidth = 10; ctx.strokeStyle = "#475569"; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(crankX, crankY); ctx.lineTo(cx, pistY); ctx.stroke();
-            ctx.lineWidth = 4; ctx.strokeStyle = "#94a3b8"; ctx.stroke(); // Costola di rinforzo interna della biella
-            
-            ctx.beginPath(); ctx.arc(crankX, crankY, 8, 0, Math.PI * 2); ctx.fillStyle = "#334155"; ctx.fill();
-
-            // PISTONE (Cielo bombato e segmenti realistici)
+        function drawCombustion(pistY, angle, rpm) {
+            if (rpm < 100) return;
             const pistTop = pistY - pistH/2;
-            const grad = ctx.createLinearGradient(cx - pistW/2, 0, cx + pistW/2, 0);
-            if (damageType) { grad.addColorStop(0, "#ef4444"); grad.addColorStop(1, "#7f1d1d"); }
-            else { grad.addColorStop(0, "#475569"); grad.addColorStop(0.5, "#cbd5e1"); grad.addColorStop(1, "#334155"); }
-            ctx.fillStyle = grad;
-            
-            // Disegno del corpo pistone
-            ctx.beginPath();
-            ctx.roundRect(cx - pistW/2, pistTop, pistW, pistH, [4, 4, 0, 0]);
-            ctx.fill();
+            let fillHeight = Math.max(0, pistTop - cylTop);
+            const intensity = Math.min(1, Math.max(0, rpm / 12000));
 
-            // Finestre dei segmenti elastici (Fasce del pistone)
-            ctx.fillStyle = "#1e293b";
-            ctx.fillRect(cx - pistW/2, pistTop + 10, 6, 3);
-            ctx.fillRect(cx + pistW/2 - 6, pistTop + 10, 6, 3);
-
-            // Spinotto centrale del pistone
-            ctx.beginPath();
-            ctx.arc(cx, pistY, 10, 0, Math.PI * 2);
-            ctx.fillStyle = "#1e293b";
-            ctx.fill();
-            ctx.strokeStyle = "#64748b";
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            if (angle >= 0 && angle < 0.8) {
+                // Scoppio realistico (Giallo/Bianco verso Arancio)
+                const fire = ctx.createRadialGradient(cx, cylTop, 0, cx, cylTop + 60, 120);
+                fire.addColorStop(0, "#ffffff");
+                fire.addColorStop(0.1, "#fde047");
+                fire.addColorStop(0.4, "rgba(239, 68, 68, 0.9)");
+                fire.addColorStop(1, "rgba(0,0,0,0)");
+                ctx.fillStyle = fire;
+                ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight);
+            } 
+            else if (angle >= 0.8 && angle <= Math.PI) {
+                // Gas di scarico combusti (Grigio scuro che esce dal condotto)
+                ctx.fillStyle = `rgba(30, 41, 59, ${0.7 * intensity})`;
+                ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight);
+                
+                // Flusso di scarico che esce dal condotto
+                const flowGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 160, 220);
+                flowGrad.addColorStop(0, `rgba(100, 116, 139, ${0.8 * intensity})`);
+                flowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+                ctx.fillStyle = flowGrad;
+                ctx.beginPath();
+                ctx.moveTo(cx + pistW/2, 220); ctx.lineTo(cx + 150, 195);
+                ctx.lineTo(cx + 150, 275); ctx.lineTo(cx + pistW/2, 270); ctx.fill();
+            } 
+            else {
+                // Miscela fresca in ingresso (Azzurrino nebulizzato dal carburatore)
+                let alpha = (angle > 4.9) ? 0.3 * intensity : 0.1;
+                ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`;
+                ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight);
+            }
         }
 
-        function drawSpark() {
-            ctx.strokeStyle = "#60a5fa"; ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.moveTo(cx, cylTop - 5); ctx.lineTo(cx - 5, cylTop + 12);
-            ctx.lineTo(cx + 5, cylTop + 18); ctx.lineTo(cx, cylTop + 26); ctx.stroke();
+        function drawMovingParts(pistY, crankX, crankY) {
+            // 1. CARTER MANOVELLA E ALBERO MOTORE
+            ctx.fillStyle = "#020617";
+            ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.fill();
+            
+            // Volano / Spalle dell'albero (Metallo pesante con foro di bilanciatura)
+            const crankGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 54);
+            crankGrad.addColorStop(0, "#94a3b8"); crankGrad.addColorStop(1, "#334155");
+            ctx.fillStyle = crankGrad;
+            ctx.beginPath(); ctx.arc(cx, cy, 54, 0, Math.PI * 2); ctx.fill();
+            // Foro di bilanciatura (alleggerimento albero)
+            ctx.fillStyle = "#020617";
+            ctx.beginPath(); ctx.arc(cx - (crankX-cx)*0.6, cy - (crankY-cy)*0.6, 12, 0, Math.PI*2); ctx.fill();
+
+            // Perno di banco (Bronzo/Rame)
+            ctx.fillStyle = "#b45309";
+            ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+
+            // 2. BIELLA IPER-REALISTICA (Profilo ad "H" in acciaio forgiato)
+            ctx.lineWidth = 14; 
+            ctx.strokeStyle = "#475569"; 
+            ctx.lineCap = "round";
+            ctx.beginPath(); ctx.moveTo(crankX, crankY); ctx.lineTo(cx, pistY); ctx.stroke();
+            // Scanalatura interna (Profilo H)
+            ctx.lineWidth = 6; ctx.strokeStyle = "#1e293b"; 
+            ctx.beginPath(); ctx.moveTo(crankX - (crankX-cx)*0.1, crankY - (crankY-pistY)*0.1); 
+            ctx.lineTo(cx + (crankX-cx)*0.1, pistY + (crankY-pistY)*0.1); ctx.stroke();
+            
+            // Testa di biella (gabbia a rulli inferiore)
+            ctx.fillStyle = "#cbd5e1";
+            ctx.beginPath(); ctx.arc(crankX, crankY, 16, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#0f172a";
+            ctx.beginPath(); ctx.arc(crankX, crankY, 8, 0, Math.PI * 2); ctx.fill();
+
+            // 3. PISTONE IN LEGA CON TEXTURE GRAFITE E SEGMENTI
+            const pistTop = pistY - pistH/2;
+            
+            // Ombreggiatura curva del mantello del pistone (Camicia rivestita)
+            const pistGrad = ctx.createLinearGradient(cx - pistW/2, 0, cx + pistW/2, 0);
+            pistGrad.addColorStop(0, "#1e293b"); // Bordo scuro
+            pistGrad.addColorStop(0.2, "#475569");
+            pistGrad.addColorStop(0.5, "#94a3b8"); // Riflesso luce centro
+            pistGrad.addColorStop(0.8, "#475569");
+            pistGrad.addColorStop(1, "#1e293b"); // Bordo scuro
+            
+            ctx.fillStyle = pistGrad;
+            ctx.beginPath();
+            // Profilo bombato superiore rialzato al centro per adattarsi allo squish
+            ctx.moveTo(cx - pistW/2, pistTop + 5);
+            ctx.quadraticCurveTo(cx, pistTop - 5, cx + pistW/2, pistTop + 5);
+            ctx.lineTo(cx + pistW/2, pistTop + pistH);
+            ctx.lineTo(cx - pistW/2, pistTop + pistH);
+            ctx.closePath();
+            ctx.fill();
+
+            // Fasce Elastiche (I 2 Segmenti per compressione e raschiaolio)
+            ctx.fillStyle = "#020617"; // Metallo brunito scuro
+            ctx.fillRect(cx - pistW/2 - 1, pistTop + 12, pistW + 2, 3); // Fascia superiore
+            ctx.fillRect(cx - pistW/2 - 1, pistTop + 20, pistW + 2, 3); // Fascia inferiore
+            
+            // Riflesso metallico sulle fasce
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
+            ctx.fillRect(cx - 10, pistTop + 12, 5, 3);
+            ctx.fillRect(cx - 10, pistTop + 20, 5, 3);
+
+            // Spinotto e anelli Seeger (Blocco biella-pistone)
+            ctx.fillStyle = "#1e293b"; // Cava dello spinotto
+            ctx.beginPath(); ctx.arc(cx, pistY, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#cbd5e1"; // Spinotto in acciaio
+            ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#020617"; // Foro centrale spinotto cavo
+            ctx.beginPath(); ctx.arc(cx, pistY, 6, 0, Math.PI * 2); ctx.fill();
+        }
+
+        function drawRealisticSpark() {
+            ctx.shadowColor = "#38bdf8";
+            ctx.shadowBlur = 15;
+            ctx.strokeStyle = "#ffffff"; 
+            ctx.lineWidth = 3;
+            ctx.lineCap = "round";
+            
+            ctx.beginPath();
+            ctx.moveTo(cx - 1, cylTop - 5);
+            ctx.lineTo(cx + 4, cylTop - 1);
+            ctx.lineTo(cx - 2, cylTop + 3);
+            ctx.lineTo(cx + 3, cylTop + 7);
+            ctx.lineTo(cx, cylTop + 12);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
         }
 
         requestAnimationFrame(draw);
