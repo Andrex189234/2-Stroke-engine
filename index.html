@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulatore 2 Tempi - DYNAMIC STRESS</title>
+    <title>Simulatore 2 Tempi - KART RACING PHYSICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -178,8 +178,8 @@
 <body>
 
     <header>
-        <h1>Motore 2 Tempi - Uncapped Physics v2</h1>
-        <div class="subtitle">Probabilità di Rottura Strutturale Meccanica in Tempo Reale</div>
+        <h1>Motore 2 Tempi - Kart Competition Spec</h1>
+        <div class="subtitle">Massa Radiante Maggiorata • Inerzia Termica v3</div>
     </header>
 
     <main class="container">
@@ -190,7 +190,7 @@
         <section class="controls-section">
             <div class="panel" id="rpmPanel">
                 <h2>
-                    Telemetria
+                    Telemetria Kart
                     <button class="engine-switch" id="engineBtn">Accendi</button>
                 </h2>
                 
@@ -201,8 +201,8 @@
 
                 <div class="temp-container">
                     <div class="temp-header">
-                        <span>TEMPERATURA GRUPPO TERMICO</span>
-                        <span id="tempValue">25 °C</span>
+                        <span>TEMPERATURA RADIATORE / CILINDRO</span>
+                        <span id="tempValue">20 °C</span>
                     </div>
                     <div class="temp-bar-bg">
                         <div class="temp-bar-fill" id="tempBar"></div>
@@ -215,16 +215,16 @@
                 </div>
 
                 <div class="stats-grid">
-                    <div>Stato Termico:<br><span class="stat-value" id="thermalState">Freddo</span></div>
+                    <div>Stato Cilindro:<br><span class="stat-value" id="thermalState">Freddo</span></div>
                     <div>Rischio Cedimento:<br><span class="stat-value" id="failureChance">0%</span></div>
                     <div style="grid-column: span 2; margin-top: 5px;">Diagnostica:<br><span class="stat-value" id="statusValue">Spento</span></div>
                 </div>
             </div>
 
             <div class="panel">
-                <h2>Analisi Meccanica Real-Time</h2>
+                <h2>Comportamento Meccanico Kart</h2>
                 <div class="dynamic-phase" id="dynamicText">
-                    Motore spento. Fai scaldare il cilindro prima di raggiungere regimi elevati.
+                    Motore spento. I motori da kart richiedono tempo per scaldare il liquido refrigerante prima del giro di pista.
                 </div>
             </div>
         </section>
@@ -258,9 +258,9 @@
         let damageType = null; // "freddo", "caldo", "esploso"
         
         let currentRpm = 0;           
-        const MIN_RPM = 1600;         
+        const MIN_RPM = 1800; // Minimo leggermente più alto, tipico da competizione kart
 
-        const AMBIENT_TEMP = 25;
+        const AMBIENT_TEMP = 20; // Partenza da box freddi
         let currentTemp = AMBIENT_TEMP;
 
         let gasPressed = false;
@@ -304,27 +304,26 @@
             const dt = time - lastTime;
             lastTime = time;
 
-            // 1. DINAMICA DI ROTAZIONE E INERZIA
+            // 1. DINAMICA GIRI MOTORE DA KART
             let targetRpm = 0;
             let accelerationFactor = 0.01; 
 
             if (isEngineRunning && !damageType) {
                 if (gasPressed) {
-                    // Se il motore è freddo, sale di giri con molta più fatica (viscosità olio alta e cattiva combustione)
-                    let coldChoke = currentTemp < 55 ? 0.45 : 1.0;
-                    targetRpm = currentRpm + (3800 * coldChoke); 
-                    if (targetRpm > 42000) targetRpm = 42000;
-                    accelerationFactor = 0.035 * coldChoke; 
+                    let coldChoke = currentTemp < 50 ? 0.5 : 1.0; // Se freddo fa fatica a prendere giri
+                    targetRpm = currentRpm + (4200 * coldChoke); 
+                    if (targetRpm > 40000) targetRpm = 40000;
+                    accelerationFactor = 0.04 * coldChoke; 
                 } else if (brakePressed) {
                     targetRpm = MIN_RPM;
-                    accelerationFactor = 0.2; 
+                    accelerationFactor = 0.25; 
                 } else {
-                    targetRpm = MIN_RPM + (Math.random() - 0.5) * 80;
-                    accelerationFactor = 0.02; 
+                    targetRpm = MIN_RPM + (Math.random() - 0.5) * 100;
+                    accelerationFactor = 0.03; 
                 }
             } else if (damageType) {
                 targetRpm = 0;
-                accelerationFactor = damageType === "esploso" ? 0.6 : 0.35; 
+                accelerationFactor = damageType === "esploso" ? 0.7 : 0.4; 
             } else {
                 targetRpm = 0;
                 accelerationFactor = 0.02; 
@@ -336,93 +335,91 @@
             const displayRpm = Math.round(currentRpm);
             rpmDisplay.textContent = displayRpm;
 
-            // 2. MODELLAZIONE TERMICODINAMICA
+            // 2. NUOVA SIMULAZIONE TERMICA: FISICA DEL RADIATORE DA KART
             if (isEngineRunning && !damageType) {
-                let combustionHeat = Math.pow(currentRpm / 14500, 2.1) * (gasPressed ? 1.3 : 0.22);
-                let thermalDissipation = 0.03 + (currentRpm / 19000) * 0.09 + (currentTemp - AMBIENT_TEMP) * 0.0022;
+                // Il calore sale più piano grazie all'inerzia della massa d'acqua (esponente ridotto a 1.85 e coefficiente abbassato)
+                let combustionHeat = Math.pow(currentRpm / 15000, 1.85) * (gasPressed ? 0.55 : 0.08);
+                
+                // Dissipazione dinamica: simula l'aria che investe il radiatore del kart in movimento (cresce molto coi giri)
+                let windCooling = (currentRpm / 12000) * 0.05;
+                let thermalDissipation = 0.015 + windCooling + (currentTemp - AMBIENT_TEMP) * 0.0015;
+                
                 currentTemp += (combustionHeat - thermalDissipation);
             } else {
-                currentTemp -= (currentTemp - AMBIENT_TEMP) * 0.0025;
+                // Raffreddamento statico a motore spento nei box
+                currentTemp -= (currentTemp - AMBIENT_TEMP) * 0.0018;
             }
             if (currentTemp < AMBIENT_TEMP) currentTemp = AMBIENT_TEMP;
 
-            // UI Monitor Termico
+            // Interfaccia Grafica della Temperatura
             tempDisplay.textContent = Math.round(currentTemp) + " °C";
-            const tempPercentage = Math.min(100, ((currentTemp - AMBIENT_TEMP) / (140 - AMBIENT_TEMP)) * 100);
+            const tempPercentage = Math.min(100, ((currentTemp - AMBIENT_TEMP) / (120 - AMBIENT_TEMP)) * 100);
             tempBar.style.width = tempPercentage + "%";
             
-            if (currentTemp < 55) {
-                thermalState.textContent = "FREDDO (Rischio Grippaggio)";
+            if (currentTemp < 50) {
+                thermalState.textContent = "FREDDO (Warm-up richiesto)";
                 thermalState.style.color = "#00e5ff";
                 tempBar.style.backgroundColor = "#00e5ff";
-            } else if (currentTemp >= 55 && currentTemp <= 95) {
-                thermalState.textContent = "OTTIMALE (Warm)";
+            } else if (currentTemp >= 50 && currentTemp <= 75) {
+                thermalState.textContent = "OTTIMALE KART (50-75°C)";
                 thermalState.style.color = "#2ed573";
                 tempBar.style.backgroundColor = "#2ed573";
-            } else if (currentTemp > 95 && currentTemp < 125) {
-                thermalState.textContent = "SURRISCALDATO";
+            } else if (currentTemp > 75 && currentTemp < 100) {
+                thermalState.textContent = "ECCESSIVO";
                 thermalState.style.color = "var(--accent-orange)";
                 tempBar.style.backgroundColor = "var(--accent-orange)";
             } else {
-                thermalState.textContent = "CRITICO COPPETTA";
+                thermalState.textContent = "EBOLLIZIONE ACQUA";
                 thermalState.style.color = "var(--accent-red)";
                 tempBar.style.backgroundColor = "var(--accent-red)";
             }
 
-            // 3. PROBABILITÀ DI ROTTURA E LOGICA RIGIDA DI CRASH
+            // 3. CALCOLO PERCENTUALI DI COMPROMISSIONE MECCANICA
             let breakChance = 0;
-
-            // Calcolo Probabilità di Rottura Strutturale (Inerzia di Biella oltre i 26k RPM)
             if (displayRpm > 26000 && !damageType) {
-                // Sale esponenzialmente dai 26k fino al 100% fissato attorno ai 35k
-                breakChance = Math.min(100, Math.floor(Math.pow((displayRpm - 26000) / 9000, 1.5) * 100));
+                breakChance = Math.min(100, Math.floor(Math.pow((displayRpm - 26000) / 8500, 1.6) * 100));
             }
             
-            // Calcolo Probabilità di Grippaggio a Freddo (Solo se acceleri a fondo sotto i 55°C)
             let coldSeizureChance = 0;
-            if (currentTemp < 55 && displayRpm > 9000 && gasPressed) {
-                // Molto più permissivo rispetto a prima. Non si azzera subito, cresce se insisti.
-                coldSeizureChance = ((displayRpm - 9000) / 18000) * (55 - currentTemp) * 0.4;
+            // Minore probabilità di blocco a freddo, serve insistenza ad alti RPM costanti
+            if (currentTemp < 50 && displayRpm > 12000 && gasPressed) {
+                coldSeizureChance = ((displayRpm - 12000) / 16000) * (50 - currentTemp) * 0.25;
             }
 
-            // Mostra la percentuale di rischio globale sullo schermo
             const totalRisk = Math.min(100, Math.round(breakChance + coldSeizureChance));
             failureChanceDisp.textContent = totalRisk + "%";
             if (totalRisk > 50) { failureChanceDisp.className = "stat-value danger"; }
             else { failureChanceDisp.className = "stat-value"; }
 
-            // Lancio dei dadi probabilistico frame per frame se il motore è sotto stress
+            // Calcolo effettivo dei danni
             if (isEngineRunning && !damageType) {
                 let dice = Math.random() * 100;
                 
-                // Controllo rottura strutturale ad alti giri
-                if (breakChance > 0 && dice < (breakChance * 0.015)) { 
+                if (breakChance > 0 && dice < (breakChance * 0.012)) { 
                     damageType = "esploso";
                     isEngineRunning = false;
                     spegniInterfacce();
                 }
-                // Controllo grippaggio a freddo probabilistico
-                else if (coldSeizureChance > 0 && dice < (coldSeizureChance * 0.02)) {
+                else if (coldSeizureChance > 0 && dice < (coldSeizureChance * 0.01)) { // Molto più difficile grippare subito a freddo rispetto a prima
                     damageType = "freddo";
                     isEngineRunning = false;
                     spegniInterfacce();
                 }
-                // Controllo grippaggio da calore estremo (Fisso sopra i 136°C)
-                else if (currentTemp >= 136) {
+                else if (currentTemp >= 115) { // Un motore da kart grippa prima se finisce l'acqua (115°C veri)
                     damageType = "caldo";
                     isEngineRunning = false;
                     spegniInterfacce();
                 }
             }
 
-            // Rigenerazione meccanica dopo il raffreddamento (Tranne per l'esplosione)
-            if ((damageType === "freddo" || damageType === "caldo") && currentTemp < 50) {
+            // Sblocco del cilindro post-raffreddamento dei materiali
+            if ((damageType === "freddo" || damageType === "caldo") && currentTemp < 45) {
                 damageType = null;
                 engineBtn.textContent = "Accendi";
                 engineBtn.classList.remove('broken');
             }
 
-            // UI Scuotimenti e avvisi diagnostici
+            // Visualizzazione Telemetria sul Quadro di Controllo
             canvasContainer.className = 'animation-section';
             rpmPanel.classList.remove('redline-active');
 
@@ -430,41 +427,41 @@
                 engineBtn.classList.add('broken');
                 failureChanceDisp.textContent = "100%";
                 if (damageType === "freddo") {
-                    engineBtn.textContent = "GRIPPATO A FREDDO";
-                    statusValue.textContent = "TOLLERANZA COMPROMESSA";
+                    engineBtn.textContent = "SEIZURE A FREDDO";
+                    statusValue.textContent = "PISTONE AGGANCIATO";
                     statusValue.style.color = "var(--accent-red)";
-                    dynamicText.innerHTML = "<strong>GRIPPAGGIO A FREDDO:</strong> Il pistone si è dilatato più velocemente del cilindro rimasto freddo. La sfortuna e la fisica hanno chiuso i giochi. Attendi che torni a 40°C.";
+                    dynamicText.innerHTML = "<strong>GRIPPAGGIO A FREDDO DA COMPETEZIONE:</strong> Nonostante l'inerzia del radiatore, hai tirato le marce a freddo. Il mantello del pistone ha azzerato la tolleranza della canna. Fai raffreddare sotto i 45°C.";
                 } else if (damageType === "caldo") {
-                    engineBtn.textContent = "GRIPPATO DA CALDO";
-                    statusValue.textContent = "FUSIONE CAMICIA CILINDRO";
+                    engineBtn.textContent = "MOTORE COTTO";
+                    statusValue.textContent = "SURRISCALDAMENTO ACQUA / ARIA";
                     statusValue.style.color = "var(--accent-red)";
-                    dynamicText.innerHTML = "<strong>GRIPPAGGIO TERMICO:</strong> Il film lubrificante è evaporato a causa del surriscaldamento prolungato. Il metallo ha fatto attrito diretto fino al blocco. Lascia raffreddare.";
+                    dynamicText.innerHTML = "<strong>GRIPPAGGIO TERMICO:</strong> Il motore del kart ha superato i 115°C. Dilatazione termica distruttiva causata dal surriscaldamento globale del blocco.";
                 } else if (damageType === "esploso") {
-                    engineBtn.textContent = "ALBERO ESPLOSO";
-                    statusValue.textContent = "CEDIMENTO STRUTTURALE DI SCHIANTO";
+                    engineBtn.textContent = "BIELLA KO";
+                    statusValue.textContent = "CENTRIFUGA DESTRUTTIVA ALBERO";
                     statusValue.style.color = "var(--accent-red)";
-                    dynamicText.innerHTML = "<strong>BIELLA SPEZZATA:</strong> La probabilità di rottura ti ha condannato. Le forze centrifughe ad altissimi giri hanno disintegrato l'imbiellaggio. Ricarica la pagina per montare un nuovo carter.";
+                    dynamicText.innerHTML = "<strong>COLLASSO MECCANICO:</strong> Regime di rotazione folle per un motore da kart. L'albero motore si è aperto, spezzando l'imbiellaggio. Fai il refresh della pagina.";
                 }
             } else {
                 if (displayRpm >= 26000) {
                     canvasContainer.classList.add('shake-extreme');
                     rpmPanel.classList.add('redline-active');
-                    statusValue.textContent = `FATICA MATERIALI: CRITICA (${breakChance}% Struttura)`;
+                    statusValue.textContent = `CRITICITÀ STRUTTURALE (${breakChance}% Stress)`;
                     statusValue.style.color = "var(--accent-red)";
                 } else if (displayRpm >= 14000) {
                     canvasContainer.classList.add('shake-warning');
-                    statusValue.textContent = "Piena Coppia in Espansione";
+                    statusValue.textContent = "Motore in Coppia (Uscita Curva)";
                     statusValue.style.color = "var(--accent-orange)";
                 } else if (displayRpm >= MIN_RPM - 100) {
-                    statusValue.textContent = currentTemp < 55 && gasPressed ? "Combustione Grassa (Motore Legato)" : "Erogazione Pulita";
+                    statusValue.textContent = currentTemp < 50 && gasPressed ? "Carburazione Grassa (Sotto-Temperatura)" : "Regime Lineare Kart";
                     statusValue.style.color = "var(--accent-blue)";
                 } else {
-                    statusValue.textContent = isEngineRunning ? "Avviamento..." : "Spento";
+                    statusValue.textContent = isEngineRunning ? "Fase di Accensione..." : "Spento nei Box";
                     statusValue.style.color = "var(--text-muted)";
                 }
             }
 
-            // Calcolo cinematica per il disegno grafico
+            // Gestione dei vettori di rotazione del loop grafico
             let speed = 0;
             if (currentRpm > 0 && damageType !== "esploso") {
                 speed = Math.pow(currentRpm / 5000, 0.85) * 0.35; 
@@ -479,9 +476,9 @@
             if (displayRpm > 100 && !damageType) {
                 let phase = "";
                 if (angle > 0 && angle <= Math.PI) {
-                    phase = angle < 0.6 ? "<strong>ESPANSIONE:</strong> Gas combusti ad alta pressione scaricano la loro forza sul pistone." : "<strong>SCARICO E TRAVASO:</strong> I gas esausti fuggono in marmitta, mentre i nuovi entrano dal carter.";
+                    phase = angle < 0.6 ? "<strong>FASE DI SCARICO:</strong> L'espansione calcolata della marmitta del kart estrae i gas esausti." : "<strong>LAVAGGIO CILINDRO:</strong> La miscela fresca sale dai travasi spingendo via i residui.";
                 } else {
-                    phase = "<strong>COMPRESSIONE:</strong> La miscela viene schiacciata sulla cupola della testa prima dello scoppio.";
+                    phase = "<strong>FASE COMPRESSIONE:</strong> Massima tenuta della fascia elastica prima del punto morto superiore.";
                 }
                 dynamicText.innerHTML = phase;
             }
@@ -502,11 +499,12 @@
         }
 
         function drawEngineBlock(temp) {
-            const thermalFactor = Math.min(1, Math.max(0, (temp - 60) / 70)); 
+            const thermalFactor = Math.min(1, Math.max(0, (temp - 50) / 65)); 
             const r = Math.floor(75 + (thermalFactor * 130));
-            const g = Math.floor(79 - (thermalFactor * 50));
-            const b = Math.floor(88 - (thermalFactor * 60));
+            const g = Math.floor(79 - (thermalFactor * 55));
+            const b = Math.floor(88 - (thermalFactor * 65));
             
+            // Radiatore/Cilindro con alette o camicia a variazione termica cromatica
             ctx.lineWidth = 3; ctx.strokeStyle = `rgb(${r},${g},${b})`;
             for(let i=0; i<8; i++) {
                 const fy = cylTop + 10 + (i*20);
@@ -541,7 +539,7 @@
             if (damageType === "esploso") {
                 ctx.fillStyle = "var(--accent-red)";
                 ctx.font = "bold 24px JetBrains Mono";
-                ctx.fillText("BIELLA SPEZZATA", cx - 105, cy);
+                ctx.fillText("ALBERO CRASHED", cx - 105, cy);
                 return;
             }
 
@@ -578,7 +576,7 @@
             const pistTop = pistY - pistH/2;
             const pistBottom = pistY + pistH/2;
             const intensity = Math.min(1, rpm / 15000);
-            const thermalFactor = Math.min(1, Math.max(0, (temp - 60) / 70));
+            const thermalFactor = Math.min(1, Math.max(0, (temp - 50) / 65));
 
             if(rpm < 100 || damageType) return;
 
