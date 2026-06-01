@@ -163,6 +163,52 @@
     </main>
 
     <script>
+        // --- NUOVO SISTEMA AUDIO ---
+        let audioCtx, osc, gainNode, noiseNode, noiseGain;
+
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Oscillatore per il tono del motore
+            osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth'; // La forma d'onda a dente di sega simula bene il 2 tempi
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.05;
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+        }
+
+        function updateAudio() {
+            if (!audioCtx) return;
+            // Mappa RPM (2800-13800) in frequenza audio (50Hz - 250Hz)
+            let freq = 50 + (engineRpm / MAX_RPM) * 200;
+            osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.05);
+            
+            // Volume basato sul gas
+            let targetVol = gasPressed ? 0.15 : 0.03;
+            gainNode.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
+        }
+
+        // Modifica al listener del tasto Start:
+        engineBtn.addEventListener('click', () => {
+            if (!isEngineRunning) {
+                initAudio();
+                // ... resto del codice ...
+            }
+        });
+
+        // Inserisci updateAudio() dentro la funzione draw()
+        function draw() {
+            updatePhysics();
+            updateUI();
+            updateAudio(); // <--- CHIAMATA AUDIO
+            // ... resto del codice ...
+        }
         const canvas = document.getElementById('engineCanvas');
         const ctx = canvas.getContext('2d');
         
