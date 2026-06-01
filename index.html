@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Junior Rok - Dyno Telemetry & Ultra Realism</title>
+    <title>Vortex Junior Rok - Termodinamica Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -96,7 +96,7 @@
 
     <header>
         <h1>Vortex Junior Rok 125cc</h1>
-        <div class="subtitle">Dyno Telemetry & Termodinamica Veloce</div>
+        <div class="subtitle">Dyno Telemetry & Termodinamica Fixata</div>
     </header>
 
     <main class="container">
@@ -129,7 +129,7 @@
                         <div class="display-label">Temp. Acqua (H2O)</div>
                         <div class="bar-container" style="width: 150px; margin-top: 0;"><div class="bar-fill temp" id="tempBar" style="width: 15%"></div></div>
                     </div>
-                    <div class="display-value temp" id="tempValue">20°</div>
+                    <div class="display-value temp" id="tempValue">20.0°</div>
                 </div>
 
                 <div class="panel-header" style="margin-bottom: 0.5rem; margin-top: 1rem;">
@@ -156,7 +156,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Kart fermo. Acqua fredda a 20°C. Premi <strong>START</strong> per avviare.
+                    Kart fermo. Acqua fredda a 20°C. Premi <strong>START</strong> per avviare e fai scaldare il motore.
                 </div>
             </div>
         </section>
@@ -166,7 +166,6 @@
         const canvas = document.getElementById('engineCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Elementi DOM
         const rpmDisplay = document.getElementById('rpmValue');
         const speedDisplay = document.getElementById('speedValue');
         const tempDisplay = document.getElementById('tempValue');
@@ -183,16 +182,14 @@
         const gasPedal = document.getElementById('gasPedal');
         const brakePedal = document.getElementById('brakePedal');
 
-        // Parametri Meccanici (Grafica)
         const cx = 300, cy = 520, crankRadius = 54, conrodLen = 132, pistW = 94, pistH = 75, cylTop = 200;       
 
-        // Stato Motore e Fisica
         let angle = 0;
         let isEngineRunning = false;
         
         let engineRpm = 0;
         let speedKmh = 0;
-        let waterTemp = 20.0; // Temperatura iniziale asfalto/ambiente
+        let waterTemp = 20.0; 
         
         const MIN_RPM = 2800; 
         const MAX_RPM = 13800;
@@ -203,7 +200,6 @@
         let gasPressed = false;
         let brakePressed = false;
 
-        // Gestione Input
         function bindPedal(element, isGas) {
             const press = (e) => { e.preventDefault(); if(isEngineRunning) { if(isGas) gasPressed = true; else brakePressed = true; } };
             const release = (e) => { e.preventDefault(); if(isGas) gasPressed = false; else brakePressed = false; };
@@ -225,16 +221,12 @@
             }
         });
 
-        // ==========================================
-        // MOTORE FISICO E TERMODINAMICO (Stile JUNIOR ROK)
-        // ==========================================
         function updatePhysics() {
             let currentNm = 0;
             let currentHp = 0;
             let currentKw = 0;
 
             if (isEngineRunning && engineRpm > 1000) {
-                // Curva Junior Rok: circa 21-23 HP massimi
                 let baseNm = 5; 
                 let boostNm = 12.5 * Math.exp(-Math.pow((engineRpm - 10500) / 2800, 2)); 
                 
@@ -254,24 +246,33 @@
             kwValue.textContent = currentKw.toFixed(1);
             nmValue.textContent = currentNm.toFixed(1);
 
-            // 2. CALCOLO TEMPERATURE VELOCE (Poca acqua, si scalda in fretta)
+            // ==========================================
+            // NUOVO SISTEMA TERMODINAMICO FIXATO
+            // ==========================================
             if (isEngineRunning) {
-                // 0.0008 = circa 1-2 gradi al secondo sotto sforzo massimo (molto realistico per un 2T)
-                let heatGen = currentHp * 0.0008; 
-                if(!gasPressed) heatGen = 0.002; // Al minimo si scalda progressivamente
+                // 1. Calore base (scoppio al minimo)
+                let baseHeat = 0.008; 
+                // 2. Calore da attrito puro (sale tantissimo se sgasiamo da fermi)
+                let frictionHeat = (engineRpm / MAX_RPM) * 0.025; 
+                // 3. Calore da potenza scaricata (sforzo reale in pista)
+                let powerHeat = currentHp * 0.002; 
+
+                // Somma totale del calore generato per ogni frame (60 volte al secondo)
+                let heatGen = baseHeat + frictionHeat + powerHeat; 
                 
-                // Raffreddamento aerodinamico: bilancia il calore se andiamo veloci in rettilineo
-                let airflowCooling = (speedKmh / MAX_SPEED) * 0.022; 
-                let passiveCooling = (waterTemp - 20) * 0.0001; // Dispersione
+                // L'aria raffredda solo se siamo in velocità (sopra i 40-50 km/h)
+                let airflowCooling = (speedKmh / MAX_SPEED) * 0.065; 
+                // Leggera dispersione ambientale naturale
+                let passiveCooling = (waterTemp - 20) * 0.0003; 
                 
                 waterTemp += heatGen - airflowCooling - passiveCooling;
             } else {
-                waterTemp -= (waterTemp - 20) * 0.0008; // Si raffredda più rapido spento
+                // A motore spento scende lentamente
+                waterTemp -= (waterTemp - 20) * 0.001; 
             }
-            if (waterTemp < 20) waterTemp = 20;
-            if (waterTemp > 110) waterTemp = 110; // Tappo radiatore limite
+            if (waterTemp < 20) waterTemp = 20.0;
+            if (waterTemp > 110) waterTemp = 110.0; 
 
-            // 3. MOVIMENTO E INERZIA
             if (!isEngineRunning) {
                 engineRpm -= engineRpm * 0.05;
                 speedKmh -= speedKmh * 0.01;
@@ -318,9 +319,6 @@
             if (engineRpm < MIN_RPM && isEngineRunning && speedKmh < 2) engineRpm = MIN_RPM + (Math.random()*50);
         }
 
-        // ==========================================
-        // AGGIORNAMENTO UI
-        // ==========================================
         function updateUI() {
             let rpmDisp = Math.round(engineRpm);
             let speedDisp = Math.floor(speedKmh);
@@ -334,7 +332,6 @@
             speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
             tempBar.style.width = Math.min(100, (waterTemp - 20) / 80 * 100) + "%";
 
-            // Colori Termodinamica MyChron (Blu, Verde Ideale, Rosso)
             if (waterTemp < 40) {
                 tempBar.style.background = "var(--accent-blue)";
                 tempDisplay.style.color = "var(--accent-blue)";
@@ -351,25 +348,24 @@
                 logHtml = "Motore spento.";
             } else {
                 if (waterTemp > 90) {
-                    logHtml = "<strong>⚠️ EBOLLIZIONE IMMINENTE!</strong><br>La temperatura è critica, prendi velocità per far entrare aria nel radiatore o fermati!";
+                    logHtml = "<strong>⚠️ EBOLLIZIONE IMMINENTE!</strong><br>La temperatura è critica, prendi velocità per raffreddare o fermati!";
+                } else if (waterTemp < 40 && speedKmh > 20) {
+                    logHtml = "<strong>⚠️ MOTORE FREDDO!</strong><br>Attenzione ai grippaggi! Riscalda il motore prima di tirare a fondo.";
                 } else if (rpmDisp > 13500) {
                     logHtml = "<strong>LIMITATORE ECU</strong><br>Oltre i 13.5k la curva di coppia scende.";
                 } else if (rpmDisp > 10500) {
                     logHtml = "<strong>PICCO DI POTENZA (HP)</strong><br>Stai sfruttando i ~22 HP del Junior Rok!";
                 } else if (speedKmh >= 8) {
-                    logHtml = "<strong>PRESA DIRETTA</strong><br>Il motore spinge il telaio, osserva la temperatura salire con l'aumento dei giri.";
+                    logHtml = "<strong>PRESA DIRETTA</strong><br>La temperatura si stabilizza tra calore prodotto e aria del radiatore.";
                 } else if (rpmDisp > CLUTCH_BITE) {
                     logHtml = "<strong>ATTACCO FRIZIONE</strong><br>I ceppi si espandono e mordono la campana.";
                 } else {
-                    logHtml = "<strong>AL MINIMO</strong><br>Motore in folle. L'acqua si sta scaldando lentamente per arrivare a temperatura ottimale (50°).";
+                    logHtml = "<strong>RISCALDAMENTO IN CORSO</strong><br>Sgasa per far alzare la temperatura più in fretta!";
                 }
             }
             if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
         }
 
-        // ==========================================
-        // MOTORE GRAFICO 2D
-        // ==========================================
         function draw() {
             updatePhysics();
             updateUI();
@@ -398,131 +394,41 @@
         }
 
         function drawEngineBlockAndCooling(valveOpen, temp) {
-            // Struttura blocco
-            ctx.fillStyle = "#1e293b";
-            ctx.fillRect(cx - 100, cylTop + 10, 200, cy - cylTop - 80);
+            ctx.fillStyle = "#1e293b"; ctx.fillRect(cx - 100, cylTop + 10, 200, cy - cylTop - 80);
+            ctx.fillStyle = "#0c0f17"; ctx.fillRect(cx - pistW/2 - 4, cylTop, pistW + 8, cy - cylTop);
 
-            // Canna cilindro
-            ctx.fillStyle = "#0c0f17"; 
-            ctx.fillRect(cx - pistW/2 - 4, cylTop, pistW + 8, cy - cylTop);
-
-            // LIQUIDO DI RAFFREDDAMENTO (Grafica Dinamica Calore)
             let heatRatio = Math.max(0, Math.min(1, (temp - 20) / 70));
-            let r = Math.floor(2 + (230 * heatRatio));
-            let g = Math.floor(132 - (100 * heatRatio));
-            let b = Math.floor(199 - (150 * heatRatio));
+            let r = Math.floor(2 + (230 * heatRatio)); let g = Math.floor(132 - (100 * heatRatio)); let b = Math.floor(199 - (150 * heatRatio));
 
             const waterGrad = ctx.createLinearGradient(0, cylTop, 0, cy - 80);
-            waterGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`); 
-            waterGrad.addColorStop(1, `rgb(${Math.floor(r*0.5)}, ${Math.floor(g*0.5)}, ${Math.floor(b*0.5)})`);
-            
-            ctx.fillStyle = waterGrad;
-            ctx.fillRect(cx - 95, cylTop + 15, 35, cy - cylTop - 95); 
-            ctx.fillRect(cx + 60, cylTop + 15, 35, cy - cylTop - 95); 
+            waterGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`); waterGrad.addColorStop(1, `rgb(${Math.floor(r*0.5)}, ${Math.floor(g*0.5)}, ${Math.floor(b*0.5)})`);
+            ctx.fillStyle = waterGrad; ctx.fillRect(cx - 95, cylTop + 15, 35, cy - cylTop - 95); ctx.fillRect(cx + 60, cylTop + 15, 35, cy - cylTop - 95); 
 
-            // Testata
             const headGrad = ctx.createLinearGradient(cx - 100, 0, cx + 100, 0);
             headGrad.addColorStop(0, "#475569"); headGrad.addColorStop(0.5, "#94a3b8"); headGrad.addColorStop(1, "#334155");
-            ctx.fillStyle = headGrad; ctx.beginPath();
-            ctx.moveTo(cx - 100, cylTop + 10); ctx.lineTo(cx - 100, cylTop - 30);
-            ctx.lineTo(cx - 30, cylTop - 30); ctx.lineTo(cx + 30, cylTop - 30);
-            ctx.lineTo(cx + 100, cylTop - 30); ctx.lineTo(cx + 100, cylTop + 10);
-            ctx.lineTo(cx + pistW/2, cylTop); ctx.lineTo(cx + 20, cylTop - 15); 
-            ctx.lineTo(cx - 20, cylTop - 15); ctx.lineTo(cx - pistW/2, cylTop);
-            ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = headGrad; ctx.beginPath(); ctx.moveTo(cx - 100, cylTop + 10); ctx.lineTo(cx - 100, cylTop - 30); ctx.lineTo(cx - 30, cylTop - 30); ctx.lineTo(cx + 30, cylTop - 30); ctx.lineTo(cx + 100, cylTop - 30); ctx.lineTo(cx + 100, cylTop + 10); ctx.lineTo(cx + pistW/2, cylTop); ctx.lineTo(cx + 20, cylTop - 15); ctx.lineTo(cx - 20, cylTop - 15); ctx.lineTo(cx - pistW/2, cylTop); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2; ctx.stroke();
 
-            // Candela NGK
-            ctx.fillStyle = "#334155"; ctx.fillRect(cx - 12, cylTop - 30, 24, 15);
-            ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - 14, cylTop - 32, 28, 2);
-            ctx.fillStyle = "#64748b"; ctx.fillRect(cx - 16, cylTop - 45, 32, 13);
-            ctx.fillStyle = "#f8fafc"; ctx.fillRect(cx - 10, cylTop - 75, 20, 30);
-            ctx.fillStyle = "#e2e8f0"; ctx.fillRect(cx - 12, cylTop - 70, 24, 3); ctx.fillRect(cx - 12, cylTop - 62, 24, 3);
-            ctx.fillStyle = "#fbbf24"; ctx.fillRect(cx - 4, cylTop - 80, 8, 5);
-            ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill();
-            ctx.fillStyle = "#f8fafc"; ctx.fillRect(cx - 4, cylTop - 15, 8, 8);
-            ctx.fillStyle = "#475569"; ctx.fillRect(cx - 1, cylTop - 7, 2, 4);
-            ctx.strokeStyle = "#475569"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + 8, cylTop - 15); ctx.lineTo(cx + 8, cylTop - 2); ctx.lineTo(cx - 1, cylTop - 2); ctx.stroke();
+            ctx.fillStyle = "#334155"; ctx.fillRect(cx - 12, cylTop - 30, 24, 15); ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - 14, cylTop - 32, 28, 2); ctx.fillStyle = "#64748b"; ctx.fillRect(cx - 16, cylTop - 45, 32, 13); ctx.fillStyle = "#f8fafc"; ctx.fillRect(cx - 10, cylTop - 75, 20, 30); ctx.fillStyle = "#e2e8f0"; ctx.fillRect(cx - 12, cylTop - 70, 24, 3); ctx.fillRect(cx - 12, cylTop - 62, 24, 3); ctx.fillStyle = "#fbbf24"; ctx.fillRect(cx - 4, cylTop - 80, 8, 5); ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill(); ctx.fillStyle = "#f8fafc"; ctx.fillRect(cx - 4, cylTop - 15, 8, 8); ctx.fillStyle = "#475569"; ctx.fillRect(cx - 1, cylTop - 7, 2, 4); ctx.strokeStyle = "#475569"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + 8, cylTop - 15); ctx.lineTo(cx + 8, cylTop - 2); ctx.lineTo(cx - 1, cylTop - 2); ctx.stroke();
 
-            // Scarico
-            const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220);
-            exhaustGrad.addColorStop(0, "#1e293b"); exhaustGrad.addColorStop(0.5, "#334155"); exhaustGrad.addColorStop(1, "#0f172a");
-            ctx.fillStyle = exhaustGrad; ctx.beginPath();
-            ctx.moveTo(cx + pistW/2 + 4, 215); ctx.lineTo(cx + 160, 190); ctx.lineTo(cx + 160, 280); ctx.lineTo(cx + pistW/2 + 4, 275);
-            ctx.closePath(); ctx.fill();
-
-            // Valvola Ghigliottina
-            ctx.fillStyle = "#0f172a"; ctx.fillRect(cx + 70, 180, 30, 25);
-            ctx.fillStyle = "#94a3b8"; let vY = valveOpen ? 185 : 215; ctx.fillRect(cx + 75, vY, 20, 35);
-            if(valveOpen) {
-                ctx.shadowColor = "var(--accent-orange)"; ctx.shadowBlur = 10;
-                ctx.strokeStyle = "var(--accent-orange)"; ctx.lineWidth = 2;
-                ctx.strokeRect(cx + 75, vY, 20, 35); ctx.shadowBlur = 0;
-            }
+            const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220); exhaustGrad.addColorStop(0, "#1e293b"); exhaustGrad.addColorStop(0.5, "#334155"); exhaustGrad.addColorStop(1, "#0f172a"); ctx.fillStyle = exhaustGrad; ctx.beginPath(); ctx.moveTo(cx + pistW/2 + 4, 215); ctx.lineTo(cx + 160, 190); ctx.lineTo(cx + 160, 280); ctx.lineTo(cx + pistW/2 + 4, 275); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = "#0f172a"; ctx.fillRect(cx + 70, 180, 30, 25); ctx.fillStyle = "#94a3b8"; let vY = valveOpen ? 185 : 215; ctx.fillRect(cx + 75, vY, 20, 35); if(valveOpen) { ctx.shadowColor = "var(--accent-orange)"; ctx.shadowBlur = 10; ctx.strokeStyle = "var(--accent-orange)"; ctx.lineWidth = 2; ctx.strokeRect(cx + 75, vY, 20, 35); ctx.shadowBlur = 0; }
         }
 
         function drawCombustion(pistY, angle, rpm) {
-            if (rpm < 100) return;
-            const pistTop = pistY - pistH/2;
-            let fillHeight = Math.max(0, pistTop - cylTop);
-            const intensity = Math.min(1, Math.max(0, rpm / 12000));
-
-            if (angle >= 0 && angle < 0.8) {
-                const fire = ctx.createRadialGradient(cx, cylTop, 0, cx, cylTop + 60, 120);
-                fire.addColorStop(0, "#ffffff"); fire.addColorStop(0.1, "#fde047");
-                fire.addColorStop(0.4, "rgba(239, 68, 68, 0.9)"); fire.addColorStop(1, "rgba(0,0,0,0)");
-                ctx.fillStyle = fire; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight);
-            } else if (angle >= 0.8 && angle <= Math.PI) {
-                ctx.fillStyle = `rgba(30, 41, 59, ${0.7 * intensity})`; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight);
-                const flowGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 160, 220);
-                flowGrad.addColorStop(0, `rgba(100, 116, 139, ${0.8 * intensity})`); flowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-                ctx.fillStyle = flowGrad; ctx.beginPath();
-                ctx.moveTo(cx + pistW/2, 220); ctx.lineTo(cx + 150, 195); ctx.lineTo(cx + 150, 275); ctx.lineTo(cx + pistW/2, 270); ctx.fill();
-            } else {
-                let alpha = (angle > 4.9) ? 0.3 * intensity : 0.1;
-                ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight);
-            }
+            if (rpm < 100) return; const pistTop = pistY - pistH/2; let fillHeight = Math.max(0, pistTop - cylTop); const intensity = Math.min(1, Math.max(0, rpm / 12000));
+            if (angle >= 0 && angle < 0.8) { const fire = ctx.createRadialGradient(cx, cylTop, 0, cx, cylTop + 60, 120); fire.addColorStop(0, "#ffffff"); fire.addColorStop(0.1, "#fde047"); fire.addColorStop(0.4, "rgba(239, 68, 68, 0.9)"); fire.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = fire; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); } else if (angle >= 0.8 && angle <= Math.PI) { ctx.fillStyle = `rgba(30, 41, 59, ${0.7 * intensity})`; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); const flowGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 160, 220); flowGrad.addColorStop(0, `rgba(100, 116, 139, ${0.8 * intensity})`); flowGrad.addColorStop(1, "rgba(0, 0, 0, 0)"); ctx.fillStyle = flowGrad; ctx.beginPath(); ctx.moveTo(cx + pistW/2, 220); ctx.lineTo(cx + 150, 195); ctx.lineTo(cx + 150, 275); ctx.lineTo(cx + pistW/2, 270); ctx.fill(); } else { let alpha = (angle > 4.9) ? 0.3 * intensity : 0.1; ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); }
         }
 
         function drawMovingParts(pistY, crankX, crankY) {
-            // Carter / Albero
-            ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.fill();
-            const crankGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 54);
-            crankGrad.addColorStop(0, "#94a3b8"); crankGrad.addColorStop(1, "#334155");
-            ctx.fillStyle = crankGrad; ctx.beginPath(); ctx.arc(cx, cy, 54, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx - (crankX-cx)*0.6, cy - (crankY-cy)*0.6, 12, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#b45309"; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
-
-            // Biella
-            ctx.lineWidth = 14; ctx.strokeStyle = "#475569"; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(crankX, crankY); ctx.lineTo(cx, pistY); ctx.stroke();
-            ctx.lineWidth = 6; ctx.strokeStyle = "#1e293b"; 
-            ctx.beginPath(); ctx.moveTo(crankX - (crankX-cx)*0.1, crankY - (crankY-pistY)*0.1); ctx.lineTo(cx + (crankX-cx)*0.1, pistY + (crankY-pistY)*0.1); ctx.stroke();
-            ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(crankX, crankY, 16, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#0f172a"; ctx.beginPath(); ctx.arc(crankX, crankY, 8, 0, Math.PI * 2); ctx.fill();
-
-            // Pistone
-            const pistTop = pistY - pistH/2;
-            const pistGrad = ctx.createLinearGradient(cx - pistW/2, 0, cx + pistW/2, 0);
-            pistGrad.addColorStop(0, "#1e293b"); pistGrad.addColorStop(0.2, "#475569"); pistGrad.addColorStop(0.5, "#94a3b8"); pistGrad.addColorStop(0.8, "#475569"); pistGrad.addColorStop(1, "#1e293b"); 
-            ctx.fillStyle = pistGrad; ctx.beginPath();
-            ctx.moveTo(cx - pistW/2, pistTop + 5); ctx.quadraticCurveTo(cx, pistTop - 5, cx + pistW/2, pistTop + 5);
-            ctx.lineTo(cx + pistW/2, pistTop + pistH); ctx.lineTo(cx - pistW/2, pistTop + pistH);
-            ctx.closePath(); ctx.fill();
-
-            // Fasce
-            ctx.fillStyle = "#020617"; ctx.fillRect(cx - pistW/2 - 1, pistTop + 12, pistW + 2, 3); ctx.fillRect(cx - pistW/2 - 1, pistTop + 20, pistW + 2, 3); 
-            ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.fillRect(cx - 10, pistTop + 12, 5, 3); ctx.fillRect(cx - 10, pistTop + 20, 5, 3);
-
-            // Spinotto
-            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(cx, pistY, 14, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx, pistY, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.fill(); const crankGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 54); crankGrad.addColorStop(0, "#94a3b8"); crankGrad.addColorStop(1, "#334155"); ctx.fillStyle = crankGrad; ctx.beginPath(); ctx.arc(cx, cy, 54, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx - (crankX-cx)*0.6, cy - (crankY-cy)*0.6, 12, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#b45309"; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.lineWidth = 14; ctx.strokeStyle = "#475569"; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(crankX, crankY); ctx.lineTo(cx, pistY); ctx.stroke(); ctx.lineWidth = 6; ctx.strokeStyle = "#1e293b"; ctx.beginPath(); ctx.moveTo(crankX - (crankX-cx)*0.1, crankY - (crankY-pistY)*0.1); ctx.lineTo(cx + (crankX-cx)*0.1, pistY + (crankY-pistY)*0.1); ctx.stroke(); ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(crankX, crankY, 16, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#0f172a"; ctx.beginPath(); ctx.arc(crankX, crankY, 8, 0, Math.PI * 2); ctx.fill();
+            const pistTop = pistY - pistH/2; const pistGrad = ctx.createLinearGradient(cx - pistW/2, 0, cx + pistW/2, 0); pistGrad.addColorStop(0, "#1e293b"); pistGrad.addColorStop(0.2, "#475569"); pistGrad.addColorStop(0.5, "#94a3b8"); pistGrad.addColorStop(0.8, "#475569"); pistGrad.addColorStop(1, "#1e293b"); ctx.fillStyle = pistGrad; ctx.beginPath(); ctx.moveTo(cx - pistW/2, pistTop + 5); ctx.quadraticCurveTo(cx, pistTop - 5, cx + pistW/2, pistTop + 5); ctx.lineTo(cx + pistW/2, pistTop + pistH); ctx.lineTo(cx - pistW/2, pistTop + pistH); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = "#020617"; ctx.fillRect(cx - pistW/2 - 1, pistTop + 12, pistW + 2, 3); ctx.fillRect(cx - pistW/2 - 1, pistTop + 20, pistW + 2, 3); ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.fillRect(cx - 10, pistTop + 12, 5, 3); ctx.fillRect(cx - 10, pistTop + 20, 5, 3);
+            ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(cx, pistY, 14, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx, pistY, 6, 0, Math.PI * 2); ctx.fill();
         }
 
         function drawRealisticSpark() {
-            ctx.shadowColor = "#38bdf8"; ctx.shadowBlur = 15; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(cx - 1, cylTop - 5); ctx.lineTo(cx + 4, cylTop - 1); ctx.lineTo(cx - 2, cylTop + 3); ctx.lineTo(cx + 3, cylTop + 7); ctx.lineTo(cx, cylTop + 12); ctx.stroke();
-            ctx.shadowBlur = 0;
+            ctx.shadowColor = "#38bdf8"; ctx.shadowBlur = 15; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(cx - 1, cylTop - 5); ctx.lineTo(cx + 4, cylTop - 1); ctx.lineTo(cx - 2, cylTop + 3); ctx.lineTo(cx + 3, cylTop + 7); ctx.lineTo(cx, cylTop + 12); ctx.stroke(); ctx.shadowBlur = 0;
         }
 
         requestAnimationFrame(draw);
