@@ -163,6 +163,40 @@
     </main>
 
     <script>
+
+        const canvas = document.getElementById('engineCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const rpmDisplay = document.getElementById('rpmValue');
+        const speedDisplay = document.getElementById('speedValue');
+        const tempDisplay = document.getElementById('tempValue');
+        const rpmBar = document.getElementById('rpmBar');
+        const speedBar = document.getElementById('speedBar');
+        const tempBar = document.getElementById('tempBar');
+        
+        const hpValue = document.getElementById('hpValue');
+        const kwValue = document.getElementById('kwValue');
+        const nmValue = document.getElementById('nmValue');
+        
+        const physicsText = document.getElementById('physicsText');
+        const engineBtn = document.getElementById('engineBtn');
+        const gasPedal = document.getElementById('gasPedal');
+        const brakePedal = document.getElementById('brakePedal');
+
+        const cx = 300, cy = 520, crankRadius = 54, conrodLen = 132, pistW = 94, pistH = 75, cylTop = 200;       
+
+        let angle = 0;
+        let isEngineRunning = false;
+        
+        let engineRpm = 0;
+        let speedKmh = 0;
+        let waterTemp = 20.0; 
+        
+        const MIN_RPM = 2800; 
+        const MAX_RPM = 13800;
+        const MAX_SPEED = 122; 
+        const CLUTCH_BITE = 4200; 
+        const RPM_PER_KMH = MAX_RPM / MAX_SPEED; 
         // --- NUOVO SISTEMA AUDIO ---
         let audioCtx, osc, gainNode, noiseNode, noiseGain;
 
@@ -209,40 +243,6 @@
             updateAudio(); // <--- CHIAMATA AUDIO
             // ... resto del codice ...
         }
-        const canvas = document.getElementById('engineCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        const rpmDisplay = document.getElementById('rpmValue');
-        const speedDisplay = document.getElementById('speedValue');
-        const tempDisplay = document.getElementById('tempValue');
-        const rpmBar = document.getElementById('rpmBar');
-        const speedBar = document.getElementById('speedBar');
-        const tempBar = document.getElementById('tempBar');
-        
-        const hpValue = document.getElementById('hpValue');
-        const kwValue = document.getElementById('kwValue');
-        const nmValue = document.getElementById('nmValue');
-        
-        const physicsText = document.getElementById('physicsText');
-        const engineBtn = document.getElementById('engineBtn');
-        const gasPedal = document.getElementById('gasPedal');
-        const brakePedal = document.getElementById('brakePedal');
-
-        const cx = 300, cy = 520, crankRadius = 54, conrodLen = 132, pistW = 94, pistH = 75, cylTop = 200;       
-
-        let angle = 0;
-        let isEngineRunning = false;
-        
-        let engineRpm = 0;
-        let speedKmh = 0;
-        let waterTemp = 20.0; 
-        
-        const MIN_RPM = 2800; 
-        const MAX_RPM = 13800;
-        const MAX_SPEED = 122; 
-        const CLUTCH_BITE = 4200; 
-        const RPM_PER_KMH = MAX_RPM / MAX_SPEED; 
-
         let gasPressed = false;
         let brakePressed = false;
 
