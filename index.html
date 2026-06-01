@@ -247,29 +247,37 @@
             nmValue.textContent = currentNm.toFixed(1);
 
             // ==========================================
-            // NUOVO SISTEMA TERMODINAMICO FIXATO
+            // NUOVO SISTEMA TERMODINAMICO FIXATO E BILANCIATO
             // ==========================================
             if (isEngineRunning) {
                 // 1. Calore base (scoppio al minimo)
                 let baseHeat = 0.008; 
-                // 2. Calore da attrito puro (sale tantissimo se sgasiamo da fermi)
-                let frictionHeat = (engineRpm / MAX_RPM) * 0.025; 
+                // 2. Calore da attrito (leggermente aumentato per bilanciare ad alti giri)
+                let frictionHeat = (engineRpm / MAX_RPM) * 0.035; 
                 // 3. Calore da potenza scaricata (sforzo reale in pista)
-                let powerHeat = currentHp * 0.002; 
+                let powerHeat = currentHp * 0.003; 
 
-                // Somma totale del calore generato per ogni frame (60 volte al secondo)
+                // Somma totale del calore generato
                 let heatGen = baseHeat + frictionHeat + powerHeat; 
                 
-                // L'aria raffredda solo se siamo in velocità (sopra i 40-50 km/h)
-                let airflowCooling = (speedKmh / MAX_SPEED) * 0.065; 
-                // Leggera dispersione ambientale naturale
-                let passiveCooling = (waterTemp - 20) * 0.0003; 
+                // 4. RAFFREDDAMENTO ARIA DIMINUITO DRASTICAMENTE
+                // Prima era 0.065, ora è 0.015. Evita che la temperatura crolli in rettilineo.
+                let airflowCooling = (speedKmh / MAX_SPEED) * 0.015; 
+                
+                // 5. Effetto Termostato: se l'acqua è fredda (< 45°C), il radiatore chiude parzialmente
+                if (waterTemp < 45) {
+                    airflowCooling *= 0.2; 
+                }
+
+                // Leggera dispersione ambientale naturale (diminuita)
+                let passiveCooling = (waterTemp - 20) * 0.00015; 
                 
                 waterTemp += heatGen - airflowCooling - passiveCooling;
             } else {
-                // A motore spento scende lentamente
-                waterTemp -= (waterTemp - 20) * 0.001; 
+                // A motore spento scende lentamente (ridotto il fattore di raffreddamento)
+                waterTemp -= (waterTemp - 20) * 0.0005; 
             }
+            
             if (waterTemp < 20) waterTemp = 20.0;
             if (waterTemp > 110) waterTemp = 110.0; 
 
