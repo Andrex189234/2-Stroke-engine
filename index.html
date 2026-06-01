@@ -247,34 +247,36 @@
             nmValue.textContent = currentNm.toFixed(1);
 
             // ==========================================
-            // NUOVO SISTEMA TERMODINAMICO FIXATO E BILANCIATO
+            // NUOVO SISTEMA TERMODINAMICO - IDLE FIX
             // ==========================================
             if (isEngineRunning) {
-                // 1. Calore base (scoppio al minimo)
-                let baseHeat = 0.008; 
-                // 2. Calore da attrito (leggermente aumentato per bilanciare ad alti giri)
-                let frictionHeat = (engineRpm / MAX_RPM) * 0.035; 
-                // 3. Calore da potenza scaricata (sforzo reale in pista)
-                let powerHeat = currentHp * 0.003; 
+                // 1. Calore base minimo indispensabile (così al minimo non surriscalda)
+                let baseHeat = 0.001; 
+                
+                // 2. Calore da attrito: usando Math.pow alla seconda, 
+                // ai bassi regimi è quasi zero, ma esplode oltre i 10.000 giri
+                let frictionHeat = Math.pow((engineRpm / MAX_RPM), 2) * 0.015; 
+                
+                // 3. Calore da potenza (lavoro termico reale)
+                let powerHeat = currentHp * 0.0008; 
 
-                // Somma totale del calore generato
+                // Somma del calore
                 let heatGen = baseHeat + frictionHeat + powerHeat; 
                 
-                // 4. RAFFREDDAMENTO ARIA DIMINUITO DRASTICAMENTE
-                // Prima era 0.065, ora è 0.015. Evita che la temperatura crolli in rettilineo.
-                let airflowCooling = (speedKmh / MAX_SPEED) * 0.015; 
+                // 4. Raffreddamento Aria bilanciato
+                let airflowCooling = (speedKmh / MAX_SPEED) * 0.025; 
                 
-                // 5. Effetto Termostato: se l'acqua è fredda (< 45°C), il radiatore chiude parzialmente
+                // Termostato (rallenta il raffreddamento a motore freddo)
                 if (waterTemp < 45) {
-                    airflowCooling *= 0.2; 
+                    airflowCooling *= 0.1; 
                 }
 
-                // Leggera dispersione ambientale naturale (diminuita)
-                let passiveCooling = (waterTemp - 20) * 0.00015; 
+                // 5. Dispersione ambientale (stabilizza l'idle sui ~26 gradi)
+                let passiveCooling = (waterTemp - 20) * 0.00025; 
                 
                 waterTemp += heatGen - airflowCooling - passiveCooling;
             } else {
-                // A motore spento scende lentamente (ridotto il fattore di raffreddamento)
+                // Motore spento si raffredda
                 waterTemp -= (waterTemp - 20) * 0.0005; 
             }
             
