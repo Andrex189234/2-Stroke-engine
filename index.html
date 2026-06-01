@@ -247,36 +247,40 @@
             nmValue.textContent = currentNm.toFixed(1);
 
             // ==========================================
-            // NUOVO SISTEMA TERMODINAMICO - IDLE FIX
+            // NUOVO SISTEMA TERMODINAMICO - PROGRESSIVO
             // ==========================================
             if (isEngineRunning) {
-                // 1. Calore base minimo indispensabile (così al minimo non surriscalda)
-                let baseHeat = 0.001; 
+                // 1. Calore base (poco, per l'idle stabile)
+                let baseHeat = 0.002; 
                 
-                // 2. Calore da attrito: usando Math.pow alla seconda, 
-                // ai bassi regimi è quasi zero, ma esplode oltre i 10.000 giri
+                // 2. Calore da attrito
                 let frictionHeat = Math.pow((engineRpm / MAX_RPM), 2) * 0.015; 
                 
-                // 3. Calore da potenza (lavoro termico reale)
-                let powerHeat = currentHp * 0.0008; 
+                // 3. Calore da sforzo/potenza (Aumentato! Ora quando spingi scalda davvero)
+                let powerHeat = currentHp * 0.004; 
 
-                // Somma del calore
                 let heatGen = baseHeat + frictionHeat + powerHeat; 
                 
-                // 4. Raffreddamento Aria bilanciato
-                let airflowCooling = (speedKmh / MAX_SPEED) * 0.025; 
+                // 4. Raffreddamento Aria
+                let airflowCooling = (speedKmh / MAX_SPEED) * 0.070; 
                 
-                // Termostato (rallenta il raffreddamento a motore freddo)
+                // Termostato PROGRESSIVO (niente più "muro" ai 45 gradi)
+                let thermostatFactor = 1.0;
                 if (waterTemp < 45) {
-                    airflowCooling *= 0.1; 
+                    thermostatFactor = 0.1; // Chiuso, fa scaldare il motore
+                } else if (waterTemp < 60) {
+                    // Si apre dolcemente man mano che sale tra i 45 e i 60 gradi
+                    thermostatFactor = 0.1 + ((waterTemp - 45) / 15) * 0.9;
                 }
+                
+                airflowCooling *= thermostatFactor;
 
-                // 5. Dispersione ambientale (stabilizza l'idle sui ~26 gradi)
-                let passiveCooling = (waterTemp - 20) * 0.00025; 
+                // 5. Dispersione ambientale
+                let passiveCooling = (waterTemp - 20) * 0.0002; 
                 
                 waterTemp += heatGen - airflowCooling - passiveCooling;
             } else {
-                // Motore spento si raffredda
+                // Motore spento si raffredda lentamente
                 waterTemp -= (waterTemp - 20) * 0.0005; 
             }
             
