@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulatore Motore 2 Tempi - 18k RPM PRO</title>
+    <title>Simulatore Motore 2 Tempi - 22k RPM EXTREME</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -85,13 +85,13 @@
         /* Effetti Vibrazione Redline Estrema */
         @keyframes extreme-vibration {
             0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(-1.5px, 1.5px) rotate(-0.3deg); }
-            50% { transform: translate(1.5px, -1.5px) rotate(0.3deg); }
-            75% { transform: translate(-1.5px, -1.5px) rotate(-0.3deg); }
-            100% { transform: translate(1.5px, 1.5px) rotate(0deg); }
+            25% { transform: translate(-2px, 2px) rotate(-0.4deg); }
+            50% { transform: translate(2px, -2px) rotate(0.4deg); }
+            75% { transform: translate(-2px, -2px) rotate(-0.4deg); }
+            100% { transform: translate(2px, 2px) rotate(0deg); }
         }
-        .shake-warning { animation: extreme-vibration 0.06s infinite; }
-        .shake-extreme { animation: extreme-vibration 0.03s infinite; filter: blur(0.5px) drop-shadow(0 0 20px rgba(255,56,56,0.4)); }
+        .shake-warning { animation: extreme-vibration 0.05s infinite; }
+        .shake-extreme { animation: extreme-vibration 0.02s infinite; filter: blur(0.8px) drop-shadow(0 0 25px rgba(255,56,56,0.5)); }
 
         /* Controlli e Telemetria */
         .controls-section {
@@ -113,7 +113,7 @@
 
         .panel.redline-active {
             border-color: var(--accent-red);
-            box-shadow: 0 0 30px rgba(255, 56, 56, 0.15);
+            box-shadow: 0 0 40px rgba(255, 56, 56, 0.2);
         }
 
         .panel::before {
@@ -260,8 +260,8 @@
 <body>
 
     <header>
-        <h1>Motore 2 Tempi 18.000 RPM</h1>
-        <div class="subtitle">Simulatore Fluidodinamico • Pedaliera Attiva • Inerzia Fisica</div>
+        <h1>Motore 2 Tempi 22.000 RPM</h1>
+        <div class="subtitle">Simulatore Ultra-High Rev • Pedaliera Attiva • Inerzia Fisica</div>
     </header>
 
     <main class="container">
@@ -329,11 +329,11 @@
         let angle = 0;
         let lastTime = performance.now();
         
-        // Variabili per l'Inerzia e 18k
+        // Variabili per l'Inerzia e 22k
         let isEngineRunning = false;
         let currentRpm = 0;           
         const MIN_RPM = 1500;         
-        const MAX_RPM = 18000; // Limitatore estremo
+        const MAX_RPM = 22000; // Limitatore spinto a 22k
 
         let gasPressed = false;
         let brakePressed = false;
@@ -377,50 +377,47 @@
 
             // 1. FISICA DEL MOTORE E INERZIA
             let targetRpm = 0;
-            let accelerationFactor = 0.01; // Decelerazione naturale (attrito)
+            let accelerationFactor = 0.01; 
 
             if (isEngineRunning) {
                 if (gasPressed) {
                     targetRpm = MAX_RPM;
-                    accelerationFactor = 0.035; // Accelerazione (tempo per prendere i 18k giri)
+                    accelerationFactor = 0.04; // Sale più feroce per arrivare a 22k
                 } else if (brakePressed) {
                     targetRpm = MIN_RPM;
                     accelerationFactor = 0.15; // Freno motore fortissimo
                 } else {
-                    // Minimo "ballerino"
-                    targetRpm = MIN_RPM + (Math.random() - 0.5) * 80;
-                    accelerationFactor = 0.015; // Ritorno al minimo naturale
+                    targetRpm = MIN_RPM + (Math.random() - 0.5) * 100;
+                    accelerationFactor = 0.015; 
                 }
             } else {
                 targetRpm = 0;
-                accelerationFactor = 0.02; // Spegnimento
+                accelerationFactor = 0.02;
             }
 
-            // Interpolazione lineare per i giri
             currentRpm += (targetRpm - currentRpm) * accelerationFactor;
-            if (currentRpm < 10) currentRpm = 0; // Ferma completamente se < 10
+            if (currentRpm < 10) currentRpm = 0;
 
             const displayRpm = Math.round(currentRpm);
             const hertz = (displayRpm / 60).toFixed(1);
             
-            // Aggiornamento Telemetria UI
             rpmDisplay.textContent = displayRpm;
             hertzValue.textContent = hertz + " Hz";
 
-            // Gestione Colori Zone Critiche
+            // Gestione Colori Zone Critiche (Scalate per i 22k)
             canvasContainer.className = 'animation-section'; 
             rpmPanel.classList.remove('redline-active');
 
-            if (displayRpm >= 16000) {
-                // Zona 16k - 18k (Extreme Redline)
+            if (displayRpm >= 19500) {
+                // Zona Extreme Redline (19.5k - 22k)
                 rpmDisplay.style.color = "var(--accent-red)";
                 rpmDisplay.style.textShadow = "0 0 35px rgba(255, 56, 56, 0.8)";
                 canvasContainer.classList.add('shake-extreme');
                 rpmPanel.classList.add('redline-active');
-                statusValue.textContent = "LIMITE MECCANICO!";
+                statusValue.textContent = "FUORIGIRI CRITICO (LIMITE MECCANICO)!";
                 statusValue.style.color = "var(--accent-red)";
-            } else if (displayRpm >= 11000) {
-                // Zona di Potenza
+            } else if (displayRpm >= 14000) {
+                // Zona di Potenza Spinta (14k - 19.5k)
                 rpmDisplay.style.color = "var(--accent-orange)";
                 rpmDisplay.style.textShadow = "0 0 25px rgba(255, 94, 0, 0.6)";
                 canvasContainer.classList.add('shake-warning');
@@ -450,51 +447,48 @@
             angle += speed;
             if (angle >= Math.PI * 2) angle -= Math.PI * 2;
 
-            // Calcolo posizioni meccaniche
             const crankX = cx + crankRadius * Math.sin(angle);
             const crankY = cy - crankRadius * Math.cos(angle);
             const pistY = crankY - Math.sqrt(conrodLen**2 - (crankX - cx)**2);
 
-            // Analisi Dinamica Fasi
+            // Analisi Dinamica Fasi (Adattata per i 22.000)
             if (displayRpm > 100) {
                 let phase = "";
                 let phaseColor = "";
                 if (angle > 0 && angle <= Math.PI) {
                     if (angle < 0.6) {
-                        phase = "<strong>ESPANSIONE:</strong> A 18.000 RPM questa fase avviene 300 volte al secondo. Lo shock termico scaraventa il pistone in basso.";
+                        phase = "<strong>ESPANSIONE:</strong> A 22.000 RPM questa fase avviene quasi 366 volte al secondo. Le temperature in camera di scoppio sono estreme.";
                         phaseColor = "var(--accent-orange)";
                     } else if (angle < 2.4) {
                         phase = "<strong>SCARICO E RISONANZA:</strong> L'estrattore conico della marmitta aspira brutalmente i gas esausti dal cilindro.";
                         phaseColor = "#747d8c";
                     } else {
-                        phase = "<strong>TRAVASO:</strong> La pressione nel carter pompa proietta miscela atomizzata a velocità soniche verso la candela.";
+                        phase = "<strong>TRAVASO:</strong> La pressione nel carter pompa proietta miscela atomizzata a velocità supersoniche verso la candela.";
                         phaseColor = "var(--accent-blue)";
                     }
                 } else {
                     if (angle < Math.PI + 1.6) {
-                        phase = "<strong>COMPRESSIONE:</strong> Banda di squish al limite. Pressioni altissime comprimono l'aria e la benzina ad alti ottani.";
+                        phase = "<strong>COMPRESSIONE:</strong> Banda di squish al limite. Pressioni altissime comprimono aria e benzina speciale ad altissimi ottani.";
                         phaseColor = "var(--accent-blue)";
                     } else {
-                        phase = "<strong>ASPIRAZIONE:</strong> Le lamelle in carbonio si spalancano richiamando quantità enormi di carburante nel carter.";
+                        phase = "<strong>ASPIRAZIONE:</strong> Le lamelle in carbonio fluttuano spalancate richiamando quantità folli di carburante nel carter.";
                         phaseColor = "var(--accent-blue)";
                     }
                 }
                 dynamicText.innerHTML = phase;
                 dynamicText.style.borderLeftColor = phaseColor;
             } else if (!isEngineRunning) {
-                dynamicText.innerHTML = "Motore spento. Premi <strong>ACCENDI</strong> e usa i <strong>PEDALI</strong> per pilotare il motore.";
+                dynamicText.innerHTML = "Motore spento. Premi <strong>ACCENDI</strong> e usa i <strong>PEDALI</strong> per pilotare il propulsore.";
                 dynamicText.style.borderLeftColor = "var(--text-muted)";
             }
 
-            // --- RENDER ORDER CANVA ---
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawFluids(pistY, angle, currentRpm);
             drawEngineBlock();
             drawMovingParts(pistY, crankX, crankY, angle);
 
-            // Scintilla in base agli RPM
             if (isEngineRunning && currentRpm > 100) {
-                const sparkWindow = currentRpm > 12000 ? 0.6 : 0.3; // Scintilla più evidente ad alti giri
+                const sparkWindow = currentRpm > 18000 ? 0.7 : 0.3; 
                 if (angle < sparkWindow || angle > Math.PI * 2 - 0.1) {
                     drawSpark(currentRpm);
                 }
@@ -524,14 +518,14 @@
 
             ctx.beginPath(); ctx.arc(cx, cy, 95, -Math.PI/4.2, Math.PI + Math.PI/4.2); ctx.stroke(); // Carter
             
-            // Parete Sx (Travasi)
+            // Parete Sx
             ctx.beginPath();
             ctx.moveTo(cx - 55, cy - 70); ctx.lineTo(cx - 55, 310);
             ctx.lineTo(cx - 100, 310); ctx.lineTo(cx - 100, 195); 
             ctx.lineTo(cx - 55, 195); ctx.lineTo(cx - 55, cylTop);
             ctx.stroke();
 
-            // Parete Dx (Scarico e Pacco Lamellare)
+            // Parete Dx
             ctx.beginPath();
             ctx.moveTo(cx + 55, cylTop); ctx.lineTo(cx + 55, 180); 
             ctx.moveTo(cx + 55, 235); ctx.lineTo(cx + 55, 320); 
@@ -609,7 +603,7 @@
         function drawFluids(pistY, angle, rpm) {
             const pistTop = pistY - pistH/2;
             const pistBottom = pistY + pistH/2;
-            const intensity = Math.min(1, rpm / 8000);
+            const intensity = Math.min(1, rpm / 12000); // Ricalibrato per alti giri
 
             if(rpm < 100) return;
 
@@ -635,7 +629,7 @@
                 ctx.moveTo(cx + 55, 180); ctx.lineTo(cx + 180, 150); ctx.lineTo(cx + 180, 260); ctx.lineTo(cx + 55, 235); ctx.fill();
             }
 
-            // Carter e Travasi (Colorati di blu acceso ad alti giri)
+            // Carter e Travasi 
             ctx.fillStyle = `rgba(0, 229, 255, ${0.3 + intensity * 0.3})`;
             ctx.beginPath(); ctx.arc(cx, cy, 93, 0, Math.PI*2); ctx.fill();
             ctx.fillRect(cx - 53, pistBottom, 106, (cy-93) - pistBottom + 95);
@@ -645,8 +639,8 @@
         }
 
         function drawSpark(rpm) {
-            const sparkColor = rpm > 14000 ? "#00e5ff" : "#ffffff"; // Diventa bluastra agli estremi
-            ctx.shadowColor = sparkColor; ctx.shadowBlur = 40; ctx.strokeStyle = sparkColor; ctx.lineWidth = rpm > 12000 ? 5 : 2; 
+            const sparkColor = rpm > 18000 ? "#00e5ff" : "#ffffff"; // Diventa bluastra agli estremi (alta energia)
+            ctx.shadowColor = sparkColor; ctx.shadowBlur = 40; ctx.strokeStyle = sparkColor; ctx.lineWidth = rpm > 16000 ? 5 : 2; 
             
             ctx.beginPath(); ctx.moveTo(cx, cylTop - 10);
             let currentY = cylTop - 10, currentX = cx;
