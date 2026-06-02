@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Junior Rok 125cc - Gestione Candela</title>
+    <title>Vortex Junior Rok 125cc - NGK Iridium IX</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #060709; --panel-bg: #12141c; --text-main: #f3f4f6;
             --text-muted: #8a94a6; --accent-blue: #38bdf8; --accent-green: #34d399;
-            --accent-orange: #fb923c; --accent-red: #ef4444; --accent-purple: #a855f7; --border-color: #242936;
+            --accent-orange: #fb923c; --accent-red: #ef4444; --accent-purple: #c084fc; --border-color: #242936;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
@@ -27,7 +27,7 @@
         }
 
         h1 { font-size: 1.6rem; font-weight: 800; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
-        .subtitle { font-size: 0.75rem; color: var(--accent-orange); letter-spacing: 1px; font-weight: 600; text-transform: uppercase; }
+        .subtitle { font-size: 0.75rem; color: var(--accent-purple); letter-spacing: 1px; font-weight: 600; text-transform: uppercase; }
 
         .container { display: flex; flex-wrap: wrap; max-width: 1400px; margin: 1.5rem auto; gap: 1.5rem; padding: 0 1rem; flex: 1; }
 
@@ -59,8 +59,8 @@
         .engine-switch.starting { background: #facc15; border-color: #ca8a04; color: #1c1917; animation: pulse 0.5s infinite alternate; }
         .engine-switch.seized { background: var(--accent-red); border-color: #f87171; animation: pulse 1s infinite alternate; }
         
-        .spark-button { background: #7c3aed; border: 1px solid #8b5cf6; color: #fff; padding: 10px 12px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .spark-button:hover { background: #6d28d9; }
+        .spark-button { background: #6b21a8; border: 1px solid #a855f7; color: #fff; padding: 10px 12px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .spark-button:hover { background: #581c87; }
 
         @keyframes pulse { from { opacity: 1; } to { opacity: 0.7; } }
 
@@ -80,7 +80,7 @@
         .bar-fill { height: 100%; transition: width 0.1s linear, background-color 0.3s; }
         .bar-fill.rpm { background: linear-gradient(90deg, var(--accent-blue), var(--accent-red)); }
         .bar-fill.speed { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); }
-        .bar-fill.spark { background: linear-gradient(90deg, var(--accent-red), var(--accent-purple)); }
+        .bar-fill.spark { background: linear-gradient(90deg, #a855f7, #3b82f6); }
 
         .carb-container { background: #0b0f19; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem; }
         .carb-slider {
@@ -105,7 +105,7 @@
         .gas-pedal { background: var(--accent-green); color: #022c22; border: 1px solid #6ee7b7; }
         .brake-pedal { background: var(--accent-red); color: #fff; border: 1px solid #f87171; }
 
-        .physics-log { font-size: 0.8rem; line-height: 1.5; padding: 1rem; background: rgba(0,0,0,0.4); border-left: 3px solid var(--accent-blue); border-radius: 0 8px 8px 0; margin-top: 1rem; color: #cbd5e1; min-height: 80px; }
+        .physics-log { font-size: 0.8rem; line-height: 1.5; padding: 1rem; background: rgba(0,0,0,0.4); border-left: 3px solid var(--accent-purple); border-radius: 0 8px 8px 0; margin-top: 1rem; color: #cbd5e1; min-height: 80px; }
         .physics-log strong { color: #fff; }
 
         @media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
@@ -115,7 +115,7 @@
 
     <header>
         <h1>Vortex Junior Rok 125cc</h1>
-        <div class="subtitle">Simulazione Usura Candela & Misfire Live</div>
+        <div class="subtitle">Upgrade: Candela NGK Iridium IX Focus</div>
     </header>
 
     <main class="container">
@@ -128,7 +128,7 @@
                 <div class="panel-header">
                     <button class="audio-switch" id="audioBtn">🔊 ATTIVA AUDIO</button>
                     <div class="btn-group">
-                        <button class="spark-button" id="sparkBtn">🔧 Nuova Candela</button>
+                        <button class="spark-button" id="sparkBtn">🔧 Nuova Iridium IX</button>
                         <button class="engine-switch" id="engineBtn">Start</button>
                     </div>
                 </div>
@@ -157,10 +157,11 @@
                     </div>
                 </div>
 
+                <!-- Box stato candela con dicitura Iridium IX -->
                 <div class="dash-grid">
                     <div class="display-box" style="grid-column: span 2; align-items: stretch;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="display-label">Efficienza Candela (NGK BR9)</div>
+                            <div class="display-label">Efficienza Elettrodo Iridio (NGK BR9EIX)</div>
                             <span class="display-value spark" id="sparkValue" style="font-size: 1.4rem;">100%</span>
                         </div>
                         <div class="bar-container" style="height: 7px;"><div class="bar-fill spark" id="sparkBar" style="width: 100%"></div></div>
@@ -174,8 +175,8 @@
                     </div>
                     <input type="range" id="carbSlider" class="carb-slider" min="-50" max="50" value="0">
                     <div class="carb-labels">
-                        <span style="color: var(--accent-red)">MAGRA (Cuoce l'elettrodo)</span>
-                        <span style="color: var(--accent-blue)">GRASSA (Imbratta al minimo)</span>
+                        <span style="color: var(--accent-red)">MAGRA (Surriscalda l'Iridio)</span>
+                        <span style="color: var(--accent-blue)">GRASSA (Alta resistenza)</span>
                     </div>
                 </div>
 
@@ -192,7 +193,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Clicca su START per attivare il motorino d'avviamento.
+                    Candela Iridium IX installata. Clicca su START per avviare.
                 </div>
             </div>
         </section>
@@ -232,7 +233,7 @@
         let coldSeizureRisk = 0; 
         let hotSeizureRisk = 0; 
 
-        // Nuove variabili candela e misfire
+        // Candela Iridio
         let sparkPlugHealth = 100.0; 
         let isMisfireThisFrame = false;
 
@@ -244,7 +245,7 @@
         let telemetryHistory = [];
         const MAX_HISTORY_POINTS = 200;
 
-        const MIN_STALL_RPM = 2000; 
+        const MIN_STALL_RPM = 1800; // Regge un minimo leggermente più basso grazie alla scintilla migliore
         const BASE_MAX_RPM = 13800;
         const MAX_SPEED = 122; 
         const CLUTCH_BITE = 4200; 
@@ -270,10 +271,9 @@
             else { carbStatus.textContent = "OTTIMALE"; carbStatus.style.color = "var(--accent-green)"; }
         });
 
-        // Evento Sostituzione Candela
         sparkBtn.addEventListener('click', () => {
             sparkPlugHealth = 100.0;
-            if(!isSeized) physicsText.innerHTML = "<strong>🔧 Meccanico:</strong> Candela sostituita con una nuova NGK BR9!";
+            if(!isSeized) physicsText.innerHTML = "<strong>🔧 Meccanico:</strong> Avvitata una NGK Iridium IX nuova di zecca!";
             updateUI();
         });
 
@@ -343,7 +343,6 @@
             if (!audioUnlocked || !audioCtx) return;
 
             if (isEngineRunning && engineRpm > 100 && !isSeized) {
-                // Effetto Misfire sull'audio: taglia istantaneamente la corrente/volume
                 if (isMisfireThisFrame) {
                     mainGain.gain.setTargetAtTime(0.01, audioCtx.currentTime, 0.01);
                     noiseGain.gain.setTargetAtTime(0.01, audioCtx.currentTime, 0.01);
@@ -413,12 +412,10 @@
                     if (isStarting && !isSeized) {
                         isStarting = false; stopStarterSound();
                         
-                        // Calcolo probabilità accensione legata allo stato della candela
                         let startupRoll = Math.random() * 100;
-                        if (carburetion > 35 && !gasPressed) sparkPlugHealth = Math.max(10, sparkPlugHealth - 25); // Si imbratta tentando l'avvio
-
-                        if (startupRoll > sparkPlugHealth || (carburetion > 40 && !gasPressed)) {
-                            physicsText.innerHTML = "<span style='color:var(--accent-red); font-weight:800;'>❌ MANCATO AVVIAMENTO!</span><br>La candela è bagnata d'olio o usurata. Sostituiscila o puliscila!";
+                        // Più facile da accendere rispetto alla candela normale anche se leggermente sporca
+                        if (startupRoll > (sparkPlugHealth + 15) || (carburetion > 45 && !gasPressed)) {
+                            physicsText.innerHTML = "<span style='color:var(--accent-red); font-weight:800;'>❌ MANCATO AVVIAMENTO!</span><br>L'iridio è coperto da troppo olio residuo. Sostituiscila!";
                             engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
                         } else {
                             isEngineRunning = true; engineRpm = 3600;
@@ -426,7 +423,7 @@
                             engineBtn.textContent = "Stop"; engineBtn.className = "engine-switch on"; 
                         }
                     }
-                }, 1200);
+                }, 1000);
             }
         });
 
@@ -438,39 +435,37 @@
 
             if (isStarting) {
                 engineRpm = 650 + Math.random() * 150; egtTemp += (25.0 - egtTemp) * 0.1; 
-                // Il motorino d'avviamento usura pochissimo la candela
-                sparkPlugHealth = Math.max(0, sparkPlugHealth - 0.01);
+                sparkPlugHealth = Math.max(0, sparkPlugHealth - 0.005);
                 recordTelemetry(engineRpm, egtTemp); return;
             }
 
-            // --- LOGICA USURA / IMBRATTAMENTO CANDELA ---
+            // --- FISICA MODIFICATA PER CANDELA IRIDIO ---
             if (isEngineRunning) {
                 if (carburetion > 20 && engineRpm < 5500) {
-                    // Carburazione Grassa ai bassi regimi = Imbrattamento rapido (Fouling)
-                    let wetFactor = (carburetion / 50) * 0.12;
+                    // Imbrattamento (Fouling): Molto ridotto grazie al diametro dell'elettrodo (moltiplicatore 0.6)
+                    let wetFactor = (carburetion / 50) * 0.12 * 0.6;
                     sparkPlugHealth = Math.max(0, sparkPlugHealth - wetFactor);
                 } else if (egtTemp > 650) {
-                    // Temperature di scarico folli = Erosione termica dell'elettrodo
-                    let burnFactor = ((egtTemp - 650) / 100) * 0.08;
+                    // Erosione termica: L'iridio sottile soffre di più le altissime EGT (moltiplicatore 1.15)
+                    let burnFactor = ((egtTemp - 650) / 100) * 0.08 * 1.15;
                     sparkPlugHealth = Math.max(0, sparkPlugHealth - burnFactor);
                 } else {
-                    // Usura standard normalissima del 2 tempi
-                    sparkPlugHealth = Math.max(0, sparkPlugHealth - 0.0015);
+                    // Usura lineare standard (più duratura del normale alle andature corrette)
+                    sparkPlugHealth = Math.max(0, sparkPlugHealth - 0.001);
                 }
             }
 
-            // --- CALCOLO MISFIRE (PERDITA COLPI LIVE) ---
+            // --- LOGICA MISFIRE IRIDIO ---
             isMisfireThisFrame = false;
-            if (isEngineRunning && sparkPlugHealth < 65) {
-                let failThreshold = 65 - sparkPlugHealth; // Range 0 - 65
-                let misfireChance = (failThreshold / 65) * 0.45; // Fino al 45% di colpi persi se a 0% salute
+            if (isEngineRunning && sparkPlugHealth < 45) { // Comincia a perdere colpi più tardi (a 45% invece di 65%)
+                let failThreshold = 45 - sparkPlugHealth; 
+                let misfireChance = (failThreshold / 45) * 0.40; 
                 if (Math.random() < misfireChance) {
                     isMisfireThisFrame = true;
                 }
             }
 
-            let currentNm = 0; let currentHp = 0; let currentKw = 0;
-            let powerMod = 1.0; let heatMod = 1.0;
+            let currentNm = 0; let powerMod = 1.0; let heatMod = 1.0;
             currentMaxRpm = BASE_MAX_RPM;
 
             if (carburetion < 0) {
@@ -488,13 +483,13 @@
                 let baseNm = 5; let boostNm = 12.5 * Math.exp(-Math.pow((engineRpm - 10500) / 2800, 2)); 
                 let loadFactor = (engineRpm > CLUTCH_BITE && speedKmh > 5) ? 1.0 : 0.6;
                 if (!gasPressed) loadFactor = 0.1;
-                currentNm = (baseNm + boostNm) * loadFactor * powerMod;
+                // Leggerissimo incremento di stabilità erogazione
+                currentNm = (baseNm + boostNm) * loadFactor * powerMod * 1.01;
                 if(engineRpm > currentMaxRpm) currentNm *= (1 - (engineRpm - currentMaxRpm)/300);
                 if(currentNm < 0) currentNm = 0;
             }
 
             if (isEngineRunning) {
-                // Se c'è misfire, non c'è calore generato dallo scoppio
                 let actualHeatMod = isMisfireThisFrame ? 0.1 : heatMod;
                 let heatGen = 0.002 + (Math.pow((engineRpm / BASE_MAX_RPM), 2) * 0.016) + (((currentNm * engineRpm) / 7120 * 0.0045) * actualHeatMod); 
                 let airflowCooling = (speedKmh / MAX_SPEED) * 0.075 * (waterTemp < 45 ? 0.08 : (waterTemp < 62 ? 0.08 + ((waterTemp - 45) / 17) * 0.92 : 1.0));
@@ -504,7 +499,7 @@
 
             if (isEngineRunning) {
                 let targetEgt = 150 + (engineRpm / BASE_MAX_RPM) * 400 + (gasPressed ? 130 : 0) + (carburetion < 0 ? Math.abs(carburetion) * 3.8 : -carburetion * 2.5);
-                if (isMisfireThisFrame) targetEgt -= 180; // Crollo termico istantaneo allo scarico
+                if (isMisfireThisFrame) targetEgt -= 180; 
                 egtTemp += (targetEgt - egtTemp) * 0.25;
             } else { egtTemp += (20.0 - egtTemp) * 0.02; }
 
@@ -520,13 +515,10 @@
                 } else { hotSeizureRisk = Math.max(0, hotSeizureRisk - 0.005); }
             }
 
-            // Stallo o spegnimento forzato
             if (isEngineRunning && speedKmh < 2 && !gasPressed) {
-                let idleTarget = 3500 - (carburetion * 45); 
+                let idleTarget = 3300 - (carburetion * 40); 
                 engineRpm += (idleTarget - engineRpm) * 0.05;
-                
-                // Se la candela perde troppi colpi al minimo, si spegne subito
-                if (engineRpm < MIN_STALL_RPM || (isMisfireThisFrame && Math.random() > 0.7)) {
+                if (engineRpm < MIN_STALL_RPM) {
                     isEngineRunning = false; engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
                     gasPedal.classList.remove('active'); brakePedal.classList.remove('active'); 
                 }
@@ -538,8 +530,8 @@
             if (isEngineRunning) {
                 if (speedKmh < 8) { 
                     if (gasPressed) {
-                        engineRpm += isMisfireThisFrame ? -400 : (carburetion > 20 ? 300 : 550); 
-                        if (engineRpm > CLUTCH_BITE) { speedKmh += 0.85; engineRpm -= 180; }
+                        engineRpm += isMisfireThisFrame ? -400 : (carburetion > 20 ? 320 : 580); 
+                        if (engineRpm > CLUTCH_BITE) { speedKmh += 0.88; engineRpm -= 170; }
                     } else if (brakePressed) { speedKmh = 0; } 
                     else { speedKmh -= rollingDrag; }
                     if (speedKmh < 0) speedKmh = 0;
@@ -551,7 +543,6 @@
                     if (speedKmh < 0) speedKmh = 0;
 
                     let targetRpm = speedKmh * rpmPerKmh;
-                    // Se perde colpi, i giri crollano repentinamente rispetto alla velocità reale delle ruote
                     if(isMisfireThisFrame) targetRpm -= (1200 + Math.random()*800);
                     engineRpm += (targetRpm - engineRpm) * 0.45;
                 }
@@ -587,9 +578,8 @@
             speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
             sparkBar.style.width = sparkPlugHealth + "%";
 
-            // Gestione Colore Barra Candela
-            if(sparkPlugHealth > 65) sparkBar.style.background = "var(--accent-purple)";
-            else if(sparkPlugHealth > 35) sparkBar.style.background = "var(--accent-orange)";
+            if(sparkPlugHealth > 50) sparkBar.style.background = "linear-gradient(90deg, #a855f7, #6366f1)";
+            else if(sparkPlugHealth > 25) sparkBar.style.background = "var(--accent-orange)";
             else sparkBar.style.background = "var(--accent-red)";
 
             if (egtTemp > 670) egtDisplay.style.color = "var(--accent-red)";
@@ -600,18 +590,18 @@
 
             let logHtml = "";
             if (isSeized) {
-                logHtml = seizureType === "FREDDO" ? "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span>" : "<span style='color:var(--accent-red); font-weight:800;'>🔥 CATASTROFE TERMICA!</span> Cielo del pistone fuso!";
+                logHtml = seizureType === "FREDDO" ? "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span>" : "<span style='color:var(--accent-red); font-weight:800;'>🔥 CATASTROFE TERMICA!</span> Pistone fuso per surriscaldamento!";
             } else if (isStarting) {
-                logHtml = "<span style='color:var(--accent-orange); font-weight:800;'>⚡ MOTORINO DI AVVIAMENTO IN FUNZIONE...</span>";
+                logHtml = "<span style='color:var(--accent-purple); font-weight:800;'>⚡ ACCENSIONE IRIDIO LIVE...</span>";
             } else if (!isEngineRunning) { 
-                if (sparkPlugHealth < 20) logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ CANDELA COMPLETAMENTE BRUCIATA / BAGNATA</span><br>Clicca su 'Nuova Candela' nei box.";
-                else logHtml = "Motore spento. Clicca START.";
+                if (sparkPlugHealth < 20) logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ ELETTRODO IRIDIO BRUCIATO O BAGNATO</span><br>Sostituisci il componente dai box.";
+                else logHtml = "Motore spento. Iridium IX attiva.";
             } else {
-                if (isMisfireThisFrame) logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 MISFIRE! IL MOTORE PERDE COLPI!</span><br>La candela sta saltando accensioni!";
-                else if (sparkPlugHealth < 50) logHtml = "<span style='color:var(--accent-orange); font-weight:800;'>⚠️ CANDELA IMBRATTATA / USURATA</span><br>Rischio imminente di vuoti e perdite di colpi.";
-                else if (carburetion > 25 && engineRpm < 5000) logHtml = "<span style='color:var(--accent-blue); font-weight:600;'>💧 SPORCAMENTO IN CORSO</span><br>Troppo grassa al minimo, la candela si sta bagnando d'olio!";
-                else if (egtTemp > 660) logHtml = "<span style='color:var(--accent-red); font-weight:600;'>🔥 SURRISCALDAMENTO ELETTRODO</span><br>EGT critica! Rischi di fondere la candela.";
-                else logHtml = "<strong>MOTORE IN FUNZIONE</strong> - Candela ottimale.";
+                if (isMisfireThisFrame) logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 CORRENTE INSTABILE: MISFIRE IRIDIO!</span>";
+                else if (sparkPlugHealth < 40) logHtml = "<span style='color:var(--accent-orange); font-weight:800;'>⚠️ EFFICIENZA IRIDIO IN CALO</span><br>Residui carboniosi isolanti sull'elettrodo fine.";
+                else if (carburetion > 25 && engineRpm < 5000) logHtml = "<span style='color:var(--accent-blue); font-weight:600;'>💧 ACCUMULO OLIO AL MINIMO</span><br>L'iridio resiste bene, ma evita di lasciarlo girare grasso troppo a lungo.";
+                else if (egtTemp > 660) logHtml = "<span style='color:var(--accent-red); font-weight:600;'>🔥 SURRISCALDAMENTO PUNTA IRIDIO</span><br>EGT critica! Rischi di distruggere l'anima centrale.";
+                else logHtml = "<strong>MOTORE IN FUNZIONE</strong> - Arco elettrico ad alta intensità.";
             }
             if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
         }
@@ -629,10 +619,9 @@
             drawMovingParts(pistY, crankX, crankY);
             drawCombustion(pistY, angle, engineRpm);
             
-            // Genera la scintilla reale solo se NON siamo in un frame di Misfire
             if (isEngineRunning && engineRpm > 500 && !isSeized && !isMisfireThisFrame) {
                 if (angle < 0.25 || angle > Math.PI * 2 - 0.25) { 
-                    if (!(carburetion > 35 && Math.random() > 0.6) && !(carburetion < -40 && Math.random() > 0.8)) drawRealisticSpark(); 
+                    if (!(carburetion > 40 && Math.random() > 0.7)) drawRealisticSpark(); 
                 }
             }
             requestAnimationFrame(draw);
@@ -644,7 +633,6 @@
             const waterGrad = ctx.createLinearGradient(0, cylTop, 0, cy - 80); waterGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`); waterGrad.addColorStop(1, `rgb(${Math.floor(r*0.5)}, ${Math.floor(g*0.5)}, ${Math.floor(b*0.5)})`);
             ctx.fillStyle = waterGrad; ctx.fillRect(cx - 95, cylTop + 15, 35, cy - cylTop - 95); ctx.fillRect(cx + 60, cylTop + 15, 35, cy - cylTop - 95); 
 
-            // Motorino di Avviamento Bendix
             ctx.fillStyle = "#334155"; ctx.beginPath(); ctx.roundRect(cx + 65, cy - 40, 50, 70, 8); ctx.fill();
             ctx.fillStyle = "#0f172a"; ctx.fillRect(cx + 70, cy - 35, 40, 60);
             if (isStarting) { 
@@ -655,22 +643,21 @@
             const headGrad = ctx.createLinearGradient(cx - 100, 0, cx + 100, 0); headGrad.addColorStop(0, "#475569"); headGrad.addColorStop(0.5, "#94a3b8"); headGrad.addColorStop(1, "#334155");
             ctx.fillStyle = headGrad; ctx.beginPath(); ctx.moveTo(cx - 100, cylTop + 10); ctx.lineTo(cx - 100, cylTop - 30); ctx.lineTo(cx - 30, cylTop - 30); ctx.lineTo(cx + 30, cylTop - 30); ctx.lineTo(cx + 100, cylTop - 30); ctx.lineTo(cx + 100, cylTop + 10); ctx.lineTo(cx + pistW/2, cylTop); ctx.lineTo(cx + 20, cylTop - 15); ctx.lineTo(cx - 20, cylTop - 15); ctx.lineTo(cx - pistW/2, cylTop); ctx.closePath(); ctx.fill();
             
-            // Candela fisica disegnata in alto
-            ctx.fillStyle = "#334155"; ctx.fillRect(cx - 12, cylTop - 30, 24, 15); ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - 14, cylTop - 32, 28, 2); 
-            // Ceramica isolante (se imbrattata si scurisce nel disegno!)
-            let sparkCeramicColor = `rgb(${Math.floor(248 - (200 * (1 - sparkPlugHealth/100)))}, ${Math.floor(250 - (220 * (1 - sparkPlugHealth/100)))}, ${Math.floor(252 - (200 * (1 - sparkPlugHealth/100)))})`;
+            // Candela Iridio (Disegno modificato con punta più fine e scura all'interno)
+            ctx.fillStyle = "#475569"; ctx.fillRect(cx - 12, cylTop - 30, 24, 15); ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - 14, cylTop - 32, 28, 2); 
+            let sparkCeramicColor = `rgb(${Math.floor(245 - (180 * (1 - sparkPlugHealth/100)))}, ${Math.floor(245 - (200 * (1 - sparkPlugHealth/100)))}, ${Math.floor(250 - (180 * (1 - sparkPlugHealth/100)))})`;
             ctx.fillStyle = sparkCeramicColor; ctx.fillRect(cx - 10, cylTop - 75, 20, 30); 
-            ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill();
+            ctx.fillStyle = "#818cf8"; ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill();
             
             let exhaustColor1 = carburetion > 15 ? "#0f172a" : "#1e293b"; let exhaustColor2 = carburetion > 15 ? "#020617" : "#0f172a";
             const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220); exhaustGrad.addColorStop(0, exhaustColor1); exhaustGrad.addColorStop(0.5, "#334155"); exhaustGrad.addColorStop(1, exhaustColor2); ctx.fillStyle = exhaustGrad; ctx.beginPath(); ctx.moveTo(cx + pistW/2 + 4, 215); ctx.lineTo(cx + 160, 190); ctx.lineTo(cx + 160, 280); ctx.lineTo(cx + pistW/2 + 4, 275); ctx.closePath(); ctx.fill();
         }
 
         function drawCombustion(pistY, angle, rpm) {
-            if (rpm < 100 || isSeized || isMisfireThisFrame) return; // Se c'è misfire saltiamo il lampo di fuoco
+            if (rpm < 100 || isSeized || isMisfireThisFrame) return; 
             const pistTop = pistY - pistH/2; let fillHeight = Math.max(0, pistTop - cylTop);
             if (angle >= 0 && angle < 0.8 && isEngineRunning) { 
-                let coreColor = carburetion < -15 ? "#ffffff" : "#fde047"; let edgeColor = carburetion > 15 ? "rgba(251, 146, 60, 0.9)" : "rgba(239, 68, 68, 0.9)";
+                let coreColor = carburetion < -15 ? "#ffffff" : "#fef08a"; let edgeColor = carburetion > 15 ? "rgba(249, 115, 22, 0.9)" : "rgba(239, 68, 68, 0.9)";
                 const fire = ctx.createRadialGradient(cx, cylTop, 0, cx, cylTop + 60, 120); fire.addColorStop(0, coreColor); fire.addColorStop(0.2, edgeColor); fire.addColorStop(1, "rgba(0,0,0,0)"); 
                 ctx.fillStyle = fire; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); 
             } else if (angle >= 0.8 && angle <= Math.PI) { 
@@ -693,12 +680,12 @@
         }
 
         function drawRealisticSpark() { 
-            // Se la candela è usurata la scintilla diventa fioca/giallognola anziché azzurra elettrica
-            let sparkColor = sparkPlugHealth > 50 ? "#ffffff" : "#facc15";
-            let shadowColor = sparkPlugHealth > 50 ? "#38bdf8" : "#fb923c";
-            ctx.shadowColor = shadowColor; ctx.shadowBlur = sparkPlugHealth > 50 ? 15 : 6; 
-            ctx.strokeStyle = sparkColor; ctx.lineWidth = sparkPlugHealth > 50 ? 3 : 1.5; 
-            ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(cx - 1, cylTop - 5); ctx.lineTo(cx + 4, cylTop - 1); ctx.lineTo(cx - 2, cylTop + 3); ctx.stroke(); ctx.shadowBlur = 0; 
+            // Scintilla ad altissima intensità tipica dell'Iridio (Riflessi viola/azzurri fissi)
+            let sparkColor = "#e0e7ff";
+            let shadowColor = "#a855f7";
+            ctx.shadowColor = shadowColor; ctx.shadowBlur = sparkPlugHealth > 45 ? 20 : 8; 
+            ctx.strokeStyle = sparkColor; ctx.lineWidth = sparkPlugHealth > 45 ? 2 : 1; 
+            ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(cx, cylTop - 6); ctx.lineTo(cx + 2, cylTop - 2); ctx.lineTo(cx - 1, cylTop + 2); ctx.stroke(); ctx.shadowBlur = 0; 
         }
 
         requestAnimationFrame(draw);
