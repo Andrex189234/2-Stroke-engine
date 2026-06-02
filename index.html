@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Junior Rok 125cc - Debugged & Working</title>
+    <title>Vortex Junior Rok 125cc - Audio Hardware Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Passo 1: Clicca su <strong>ATTIVA AUDIO</strong>.<br>Passo 2: Clicca su <strong>START</strong> per accendere.
+                    Passo 1: Clicca su <strong>ATTIVA AUDIO</strong>.<br>Passo 2: Clicca su <strong>START</strong> per accendere. (Se usi iPhone/iPad, togli la modalità silenziosa hardware!)
                 </div>
             </div>
         </section>
@@ -214,7 +214,7 @@
         let gasPressed = false;
         let brakePressed = false;
 
-        // --- MOTORE AUDIO REVISIONATO ---
+        // --- APPARATO AUDIO REGISTRATO DIRETTAMENTE ---
         let audioCtx = null;
         let mainOsc = null;
         let subOsc = null;
@@ -234,82 +234,86 @@
         }
 
         audioBtn.addEventListener('click', () => {
-            if (!audioCtx) {
-                // Inizializzazione sicura cross-browser
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContextClass();
+            try {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContextClass();
+                    
+                    mainOsc = audioCtx.createOscillator();
+                    mainOsc.type = 'sawtooth';
+                    
+                    subOsc = audioCtx.createOscillator();
+                    subOsc.type = 'sawtooth';
+
+                    noiseNode = audioCtx.createBufferSource();
+                    noiseNode.buffer = createNoiseBuffer();
+                    noiseNode.loop = true;
+
+                    noiseFilter = audioCtx.createBiquadFilter();
+                    noiseFilter.type = 'bandpass';
+                    noiseFilter.Q.value = 4;
+
+                    noiseGain = audioCtx.createGain();
+                    noiseGain.gain.value = 0;
+
+                    mainGain = audioCtx.createGain();
+                    mainGain.gain.value = 0;
+
+                    mainOsc.connect(mainGain);
+                    subOsc.connect(mainGain);
+                    noiseNode.connect(noiseFilter);
+                    noiseFilter.connect(noiseGain);
+                    
+                    mainGain.connect(audioCtx.destination);
+                    noiseGain.connect(audioCtx.destination);
+
+                    mainOsc.start(0);
+                    subOsc.start(0);
+                    noiseNode.start(0);
+                }
                 
-                mainOsc = audioCtx.createOscillator();
-                mainOsc.type = 'sawtooth';
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
                 
-                subOsc = audioCtx.createOscillator();
-                subOsc.type = 'sawtooth';
-
-                noiseNode = audioCtx.createBufferSource();
-                noiseNode.buffer = createNoiseBuffer();
-                noiseNode.loop = true;
-
-                noiseFilter = audioCtx.createBiquadFilter();
-                noiseFilter.type = 'bandpass';
-                noiseFilter.Q.setValueAtTime(4, audioCtx.currentTime);
-
-                noiseGain = audioCtx.createGain();
-                noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
-
-                mainGain = audioCtx.createGain();
-                mainGain.gain.setValueAtTime(0, audioCtx.currentTime);
-
-                mainOsc.connect(mainGain);
-                subOsc.connect(mainGain);
-                noiseNode.connect(noiseFilter);
-                noiseFilter.connect(noiseGain);
-                
-                mainGain.connect(audioCtx.destination);
-                noiseGain.connect(audioCtx.destination);
-
-                mainOsc.start(0);
-                subOsc.start(0);
-                noiseNode.start(0);
+                audioBtn.textContent = "✅ AUDIO PRONTO";
+                audioBtn.className = "audio-switch ready";
+                physicsText.innerHTML = "Audio sbloccato correttamente! Premi <strong>START</strong> per accendere il kart.";
+            } catch (err) {
+                physicsText.innerHTML = "Errore di sblocco audio: " + err.message;
             }
-            
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
-            audioBtn.textContent = "✅ AUDIO PRONTO";
-            audioBtn.className = "audio-switch ready";
-            physicsText.innerHTML = "Audio sbloccato! Ora premi <strong>START</strong> per accendere il kart.";
         });
 
+        // ASSEGNAZIONE DIRETTA DEI VALORI SENZA TIMELINE OVERLAP
         function updateAudio() {
             if (!audioCtx || audioCtx.state === 'suspended') return;
 
             if (isEngineRunning && engineRpm > 100 && !isSeized) {
                 let hz = 50 + (engineRpm / MAX_RPM) * 280;
                 
-                mainOsc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.02);
-                subOsc.frequency.setTargetAtTime(hz * 0.5, audioCtx.currentTime, 0.02);
+                mainOsc.frequency.value = hz;
+                subOsc.frequency.value = hz * 0.5;
 
                 let filterFreq = 200 + (engineRpm / MAX_RPM) * 900 + (gasPressed ? 500 : 0);
-                noiseFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.03);
+                noiseFilter.frequency.value = filterFreq;
 
-                let targetMainVol = gasPressed ? 0.45 : 0.12;
-                let targetNoiseVol = gasPressed ? 0.20 : 0.04;
+                // Spinto il volume generale per saturare meglio le casse esterne
+                let targetMainVol = gasPressed ? 0.60 : 0.16;
+                let targetNoiseVol = gasPressed ? 0.25 : 0.05;
 
                 if (engineRpm < 3800) {
-                    let crackle = 1 + Math.sin(audioCtx.currentTime * 40) * 0.4;
+                    let crackle = 1 + Math.sin(Date.now() * 0.04) * 0.4;
                     targetMainVol *= crackle;
                 }
 
-                mainGain.gain.setTargetAtTime(targetMainVol, audioCtx.currentTime, 0.03);
-                noiseGain.gain.setTargetAtTime(targetNoiseVol, audioCtx.currentTime, 0.03);
+                mainGain.gain.value = targetMainVol;
+                noiseGain.gain.value = targetNoiseVol;
             } else {
-                mainGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
-                noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
+                if (mainGain) mainGain.gain.value = 0;
+                if (noiseGain) noiseGain.gain.value = 0;
             }
         }
 
-        // --- SISTEMA DI INPUT CORRETTO (SENZA ERRORI SINTATTICI) ---
         function bindPedal(element, isGas) {
             const press = (e) => { 
                 e.preventDefault(); 
@@ -348,7 +352,7 @@
                 brakePedal.classList.add('active');
                 engineBtn.textContent = "Stop"; 
                 engineBtn.className = "engine-switch on";
-                if(engineRpm < MIN_RPM) engineRpm = MIN_RPM; // Avvio istantaneo al minimo
+                if(engineRpm < MIN_RPM) engineRpm = MIN_RPM;
             } else {
                 gasPedal.classList.remove('active'); 
                 brakePedal.classList.remove('active');
@@ -507,17 +511,17 @@
             let logHtml = "";
             if (isSeized) {
                 if (seizureType === "FREDDO") {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Pistone stampato a " + tempDisp + "°C.";
+                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Tolleranze azzerate.";
                 } else {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Fuso a " + tempDisp + "°C.";
+                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Dilatazione distruttiva.";
                 }
             } else if (!isEngineRunning) {
                 logHtml = "Motore pronto.";
             } else {
                 if (coldSeizureRisk > 0.4) {
-                    logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ MOTORE FREDDO!</span><br>Rischio grippata imminente ad alti RPM!";
+                    logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ MOTORE FREDDO!</span><br>Rischio incollatura fascia ad alti RPM!";
                 } else if (hotSeizureRisk > 0.4 || waterTemp > 92) {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ SURRISCALDAMENTO!</span><br>Riduci il gas.";
+                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ SURRISCALDAMENTO!</span><br>Molla il gas.";
                 } else if (rpmDisp > 10500) {
                     logHtml = "<strong>IN COPPIA FULL GAS</strong>";
                 } else if (speedKmh < 8) {
