@@ -40,7 +40,6 @@
 
         canvas { max-width: 100%; height: auto; display: block; filter: contrast(1.1) saturate(1.1); }
         
-        /* Stile specifico per il canvas del Data Logger */
         #telemetryCanvas { background: #070a12; border: 1px solid var(--border-color); border-radius: 8px; width: 100%; height: 140px; margin-top: 0.5rem; }
 
         .controls-section { flex: 1 1 450px; display: flex; flex-direction: column; gap: 1rem; }
@@ -98,9 +97,9 @@
         .carb-labels { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
 
         .pedals-container { display: flex; gap: 1rem; margin-top: 0.5rem; }
-        .pedal { flex: 1; padding: 1.5rem 1rem; text-align: center; border-radius: 10px; font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer; user-select: none; transition: 0.1s; box-shadow: 0 6px 0 rgba(0,0,0,0.6); opacity: 0.3; pointer-events: none; }
-        .pedal.active { opacity: 1; pointer-events: auto; }
-        .pedal:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0); filter: brightness(1.2); }
+        .pedal { flex: 1; padding: 1.5rem 1rem; text-align: center; border-radius: 10px; font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer; user-select: none; transition: 0.1s; box-shadow: 0 6px 0 rgba(0,0,0,0.6); opacity: 0.3; }
+        .pedal.active { opacity: 1; }
+        .pedal:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.6); filter: brightness(1.2); }
         .gas-pedal { background: var(--accent-green); color: #022c22; border: 1px solid #6ee7b7; }
         .brake-pedal { background: var(--accent-red); color: #fff; border: 1px solid #f87171; }
 
@@ -146,7 +145,7 @@
                     <div class="display-box" style="align-items: flex-start; justify-content: space-between; flex-direction: row; width: 100%;">
                         <div style="display:flex; flex-direction: column; justify-content: space-between; height: 100%;">
                             <div class="display-label">Temp. Acqua H2O</div>
-                            <span class="display-value temp" id="tempValue" style="font-size: 1.6rem; margin-top: 5px;">20.0°</span>
+                            <span class="display-value temp" id="tempValue" style="font-size: 1.6rem; margin-top: 5px;">20.0°C</span>
                         </div>
                     </div>
                     <div class="display-box" style="align-items: flex-start; justify-content: space-between; flex-direction: row; width: 100%;">
@@ -198,7 +197,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Tocca un punto qualsiasi per sbloccare l'audio.
+                    Clicca su START per avviare il motore del kart.
                 </div>
             </div>
         </section>
@@ -208,7 +207,6 @@
         const canvas = document.getElementById('engineCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Canvas della Telemetria
         const telCanvas = document.getElementById('telemetryCanvas');
         const tCtx = telCanvas.getContext('2d');
         
@@ -243,9 +241,8 @@
         let engineRpm = 0;
         let speedKmh = 0;
         let waterTemp = 20.0; 
-        let egtTemp = 20.0; // Strumento EGT incorporato
+        let egtTemp = 20.0; 
         
-        // Array storico per immagazzinare i dati della telemetria (Buffer circolare simulato)
         let telemetryHistory = [];
         const MAX_HISTORY_POINTS = 200;
 
@@ -261,7 +258,6 @@
         let brakePressed = false;
         let carburetion = 0; 
 
-        // Variabili Audio
         let audioCtx = null;
         let mainOsc = null, subOsc = null, noiseNode = null;
         let mainGain = null, noiseFilter = null, noiseGain = null;
@@ -288,11 +284,9 @@
         function unlockAudioSystem() {
             if (audioUnlocked) return;
             try {
-                if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContextClass();
-                const emptyBuffer = audioCtx.createBuffer(1, 1, 22050); const unlockSource = audioCtx.createBufferSource(); unlockSource.buffer = emptyBuffer; unlockSource.connect(audioCtx.destination); unlockSource.start(0);
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext; 
+                audioCtx = new AudioContextClass();
+                
                 mainOsc = audioCtx.createOscillator(); mainOsc.type = 'sawtooth';
                 subOsc = audioCtx.createOscillator(); subOsc.type = 'sawtooth';
                 
@@ -316,7 +310,6 @@
             } catch (err) { physicsText.innerHTML = "Errore Audio: " + err.message; }
         }
 
-        document.addEventListener('pointerdown', unlockAudioSystem);
         audioBtn.addEventListener('click', unlockAudioSystem);
 
         function updateAudio() {
@@ -356,29 +349,40 @@
             }
         }
 
-        function bindPedal(element, isGas) {
-            const press = (e) => { e.preventDefault(); if(isEngineRunning && !isSeized) { if(isGas) gasPressed = true; else brakePressed = true; } };
-            const release = (e) => { e.preventDefault(); if(isGas) gasPressed = false; else brakePressed = false; };
-            element.addEventListener('pointerdown', press); element.addEventListener('pointerup', release); element.addEventListener('pointerleave', release);
+        function setupPedal(element, pressCallback, releaseCallback) {
+            element.addEventListener('mousedown', pressCallback);
+            element.addEventListener('mouseup', releaseCallback);
+            element.addEventListener('mouseleave', releaseCallback);
+            element.addEventListener('touchstart', (e) => { e.preventDefault(); pressCallback(); });
+            element.addEventListener('touchend', (e) => { e.preventDefault(); releaseCallback(); });
         }
-        
-        bindPedal(gasPedal, true); bindPedal(brakePedal, false);
+
+        setupPedal(gasPedal, () => { if(isEngineRunning && !isSeized) gasPressed = true; }, () => { gasPressed = false; });
+        setupPedal(brakePedal, () => { if(isEngineRunning && !isSeized) brakePressed = true; }, () => { brakePressed = false; });
 
         engineBtn.addEventListener('click', () => {
+            unlockAudioSystem();
             if (isSeized) {
                 isSeized = false; seizureType = ""; coldSeizureRisk = 0; hotSeizureRisk = 0; waterTemp = 20.0; egtTemp = 20.0; engineRpm = 0; speedKmh = 0; telemetryHistory = [];
                 engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
                 physicsText.innerHTML = "Motore rigenerato."; return;
             }
             isEngineRunning = !isEngineRunning;
-            if (isEngineRunning) { gasPedal.classList.add('active'); brakePedal.classList.add('active'); engineBtn.textContent = "Stop"; engineBtn.className = "engine-switch on"; if(engineRpm < MIN_RPM) engineRpm = MIN_RPM; } 
-            else { gasPedal.classList.remove('active'); brakePedal.classList.remove('active'); gasPressed = false; brakePressed = false; engineBtn.textContent = "Start"; engineBtn.className = "engine-switch"; }
+            if (isEngineRunning) { 
+                gasPedal.classList.add('active'); brakePedal.classList.add('active'); 
+                engineBtn.textContent = "Stop"; engineBtn.className = "engine-switch on"; 
+                if(engineRpm < MIN_RPM) engineRpm = MIN_RPM; 
+            } else { 
+                gasPedal.classList.remove('active'); brakePedal.classList.remove('active'); 
+                gasPressed = false; brakePressed = false; 
+                engineBtn.textContent = "Start"; engineBtn.className = "engine-switch"; 
+            }
         });
 
         function updatePhysics() {
             if (isSeized) {
                 engineRpm = 0; gasPressed = false; speedKmh -= speedKmh * 0.08; if(speedKmh < 0.5) speedKmh = 0; 
-                egtTemp += (20.0 - egtTemp) * 0.05; // Lo scarico si raffredda a motore bloccato
+                egtTemp += (20.0 - egtTemp) * 0.05;
                 recordTelemetry(0, egtTemp);
                 return;
             }
@@ -416,7 +420,6 @@
 
             hpValue.textContent = currentHp.toFixed(1); kwValue.textContent = currentKw.toFixed(1); nmValue.textContent = currentNm.toFixed(1);
 
-            // --- DINAMICA DI RISCALDAMENTO H2O ---
             if (isEngineRunning) {
                 let baseHeat = 0.002; 
                 let frictionHeat = Math.pow((engineRpm / BASE_MAX_RPM), 2) * 0.016; 
@@ -430,37 +433,30 @@
             } else { waterTemp -= (waterTemp - 20) * 0.0005; }
             if (waterTemp < 20) waterTemp = 20.0;
 
-            // --- DINAMICA ISTANTANEA DELLA SONDA EGT ---
             if (isEngineRunning) {
-                // Modello matematico dei gas di scarico: basato sui giri e sul carico acceleratore
                 let targetEgt = 150 + (engineRpm / BASE_MAX_RPM) * 400;
                 if (gasPressed) targetEgt += 130;
                 
-                // Effetto cruciale della Carburazione sull'EGT
                 if (carburetion < 0) {
-                    targetEgt += Math.abs(carburetion) * 3.8; // Smagrimento = picco EGT fulmineo (fino a 700°C+)
+                    targetEgt += Math.abs(carburetion) * 3.8; 
                 } else {
-                    targetEgt -= carburetion * 2.5; // Grasso = i gas incombusti raffreddano lo scarico
+                    targetEgt -= carburetion * 2.5; 
                 }
-                
-                // La sonda ha una reattività rapidissima rispetto all'acqua
                 egtTemp += (targetEgt - egtTemp) * 0.2;
             } else {
                 egtTemp += (20.0 - egtTemp) * 0.02;
             }
 
-            // --- GESTIONE DANNI (Basata su Acqua ed EGT fuori scala)
             if (isEngineRunning) {
                 if (waterTemp < 42 && engineRpm > 8500 && gasPressed) {
                     coldSeizureRisk += (engineRpm - 8500) * 0.00008; 
                     if (coldSeizureRisk >= 1.0) { isSeized = true; seizureType = "FREDDO"; isEngineRunning = false; }
                 } else { coldSeizureRisk = Math.max(0, coldSeizureRisk - 0.003); }
 
-                // Il grippaggio termico ora accelera drammaticamente se l'EGT sfonda i 690°C
                 let tempThreshold = 94;
                 if (waterTemp > tempThreshold || egtTemp > 690) {
                     let thermalLoad = (waterTemp - tempThreshold) * 0.0006;
-                    if (egtTemp > 690) thermalLoad += (egtTemp - 690) * 0.002; // Contributo critico dei gas incandescenti
+                    if (egtTemp > 690) thermalLoad += (egtTemp - 690) * 0.002; 
                     if (gasPressed) thermalLoad *= 2.5;
                     
                     hotSeizureRisk += thermalLoad;
@@ -470,7 +466,6 @@
 
             if (!isEngineRunning) { engineRpm -= engineRpm * 0.05; speedKmh -= speedKmh * 0.01; recordTelemetry(engineRpm, egtTemp); return; }
 
-            // --- CINEMATICA ---
             let aeroDrag = (speedKmh * speedKmh) * 0.000035; let rollingDrag = 0.08; 
 
             if (speedKmh < 8) { 
@@ -495,7 +490,6 @@
             if (engineRpm > currentMaxRpm) engineRpm = currentMaxRpm - (Math.random()*150); 
             if (engineRpm < MIN_RPM && isEngineRunning && speedKmh < 2) engineRpm = MIN_RPM + (Math.random()*50);
 
-            // Invia i dati al Data Logger
             recordTelemetry(engineRpm, egtTemp);
         }
 
@@ -509,7 +503,6 @@
         function drawTelemetry() {
             tCtx.clearRect(0, 0, telCanvas.width, telCanvas.height);
             
-            // Disegna griglia di sfondo
             tCtx.strokeStyle = "#161b26"; tCtx.lineWidth = 1;
             for(let i = 1; i < 4; i++) {
                 let y = (telCanvas.height / 4) * i;
@@ -518,23 +511,19 @@
 
             if (telemetryHistory.length < 2) return;
 
-            // Disegna Tracciato RPM (Colore Azzurro)
             tCtx.lineWidth = 2; tCtx.strokeStyle = "#38bdf8";
             tCtx.beginPath();
             for (let i = 0; i < telemetryHistory.length; i++) {
                 let x = (telCanvas.width / MAX_HISTORY_POINTS) * i;
-                // Normalizza RPM su scala altezza canvas (Max BASE_MAX_RPM)
                 let y = telCanvas.height - (telemetryHistory[i].rpm / BASE_MAX_RPM) * (telCanvas.height - 20) - 5;
                 if (i === 0) tCtx.moveTo(x, y); else tCtx.lineTo(x, y);
             }
             tCtx.stroke();
 
-            // Disegna Tracciato EGT (Colore Rosso)
             tCtx.lineWidth = 2; tCtx.strokeStyle = "#f43f5e";
             tCtx.beginPath();
             for (let i = 0; i < telemetryHistory.length; i++) {
                 let x = (telCanvas.width / MAX_HISTORY_POINTS) * i;
-                // Normalizza EGT su scala altezza canvas (Max 750 gradi)
                 let y = telCanvas.height - (telemetryHistory[i].egt / 750) * (telCanvas.height - 20) - 5;
                 if (i === 0) tCtx.moveTo(x, y); else tCtx.lineTo(x, y);
             }
@@ -550,7 +539,6 @@
             rpmBar.style.width = (rpmDisp / BASE_MAX_RPM) * 100 + "%"; 
             speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
 
-            // Gestione allarmi visivi EGT
             if (egtTemp > 670) { egtDisplay.style.color = "var(--accent-red)"; }
             else if (egtTemp > 560) { egtDisplay.style.color = "var(--accent-orange)"; }
             else { egtDisplay.style.color = "#f43f5e"; }
@@ -560,12 +548,12 @@
             let logHtml = "";
             if (isSeized) {
                 if (seizureType === "FREDDO") logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Pistone espanso troppo rapidamente.";
-                else logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 CATASTROFE TERMICA!</span><br>L'EGT ha superato la temperatura critica dei metalli. Pistone fuso!";
-            } else if (!isEngineRunning) { logHtml = "Motore spento. Analizza i dati del Data Logger."; } 
+                else logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 CATASTROFE TERMICA!</span><br>L'EGT ha fuso il cielo del pistone!";
+            } else if (!isEngineRunning) { logHtml = "Motore spento. Clicca START."; } 
             else {
-                if (egtTemp > 680) { logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🚨 EMERGENZA EGT: SCARICO INCANDESCENTE!</span><br>Ingrassa lo spillo immediatamente o gripperai!"; }
-                else if (carburetion > 25) { logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>💧 TROPPO GRASSA (EGT BASSA)</span><br>La candela si sta imbrattando, scarico freddo."; }
-                else if (rpmDisp > 10500) { logHtml = "<strong>MOTORE IN PIENA COPPIA (ZONA ESPANSIONE)</strong>"; } 
+                if (egtTemp > 680) { logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🚨 PERICOLO EGT ELEVATA!</span><br>Ingrassa o gripperai!"; }
+                else if (carburetion > 25) { logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>💧 TROPPO GRASSA</span><br>Il motore borbotta."; }
+                else if (rpmDisp > 10500) { logHtml = "<strong>IN COPPIA (SCARICO IN RISONANZA)</strong>"; } 
                 else { logHtml = "<strong>MOTORE IN FUNZIONE</strong>"; }
             }
             if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
@@ -602,7 +590,6 @@
             ctx.fillStyle = headGrad; ctx.beginPath(); ctx.moveTo(cx - 100, cylTop + 10); ctx.lineTo(cx - 100, cylTop - 30); ctx.lineTo(cx - 30, cylTop - 30); ctx.lineTo(cx + 30, cylTop - 30); ctx.lineTo(cx + 100, cylTop - 30); ctx.lineTo(cx + 100, cylTop + 10); ctx.lineTo(cx + pistW/2, cylTop); ctx.lineTo(cx + 20, cylTop - 15); ctx.lineTo(cx - 20, cylTop - 15); ctx.lineTo(cx - pistW/2, cylTop); ctx.closePath(); ctx.fill();
             ctx.fillStyle = "#334155"; ctx.fillRect(cx - 12, cylTop - 30, 24, 15); ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - 14, cylTop - 32, 28, 2); ctx.fillStyle = "#f8fafc"; ctx.fillRect(cx - 10, cylTop - 75, 20, 30); ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill();
             
-            // Fumo dinamico dallo scarico basato sulla carburazione ed EGT
             let exhaustColor1 = carburetion > 15 ? "#0f172a" : "#1e293b";
             let exhaustColor2 = carburetion > 15 ? "#020617" : "#0f172a";
             const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220); exhaustGrad.addColorStop(0, exhaustColor1); exhaustGrad.addColorStop(0.5, "#334155"); exhaustGrad.addColorStop(1, exhaustColor2); ctx.fillStyle = exhaustGrad; ctx.beginPath(); ctx.moveTo(cx + pistW/2 + 4, 215); ctx.lineTo(cx + 160, 190); ctx.lineTo(cx + 160, 280); ctx.lineTo(cx + pistW/2 + 4, 275); ctx.closePath(); ctx.fill();
@@ -634,7 +621,7 @@
             ctx.fillStyle = pistGrad; ctx.beginPath(); ctx.moveTo(cx - pistW/2, pistTop + 5); ctx.quadraticCurveTo(cx, pistTop - 5, cx + pistW/2, pistTop + 5); ctx.lineTo(cx + pistW/2, pistTop + pistH); ctx.lineTo(cx - pistW/2, pistTop + pistH); ctx.closePath(); ctx.fill();
             ctx.fillStyle = "#020617"; ctx.fillRect(cx - pistW/2 - 1, pistTop + 12, pistW + 2, 3);
             ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(cx, pistY, 14, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); fill();
+            ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill();
         }
 
         function drawRealisticSpark() {
