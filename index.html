@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Junior Rok - Hardcore Simulator Pro Audio</title>
+    <title>Vortex Junior Rok - Hardcore Simulator Audio Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -45,12 +45,18 @@
         .panel { background: var(--panel-bg); padding: 1.2rem; border-radius: 16px; border: 1px solid var(--border-color); position: relative; }
         .panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-red)); }
 
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.5rem; }
         .panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); }
+
+        .audio-switch {
+            background: #2563eb; border: 1px solid #3b82f6; color: #fff; padding: 10px 15px;
+            font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s;
+        }
+        .audio-switch.ready { background: #059669; border-color: #10b981; }
 
         .engine-switch {
             background: #334155; border: 1px solid #475569; color: #fff; padding: 10px 20px;
-            font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 140px; text-align: center;
+            font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 120px; text-align: center;
         }
         .engine-switch.on { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
         .engine-switch.seized { background: var(--accent-red); border-color: #f87171; animation: pulse 1s infinite alternate; }
@@ -99,7 +105,7 @@
 
     <header>
         <h1>Vortex Junior Rok 125cc</h1>
-        <div class="subtitle">Simulazione Termodinamica & Audio Realistico 2T</div>
+        <div class="subtitle">Simulazione Termodinamica & Audio Sbloccato</div>
     </header>
 
     <main class="container">
@@ -110,7 +116,7 @@
         <section class="controls-section">
             <div class="panel">
                 <div class="panel-header">
-                    <h2>Cruscotto (MyChron 5)</h2>
+                    <button class="audio-switch" id="audioBtn">🔊 ATTIVA AUDIO</button>
                     <button class="engine-switch" id="engineBtn">Start</button>
                 </div>
                 
@@ -159,7 +165,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Kart fermo. Acqua fredda a 20°C. Premi <strong>START</strong> per attivare l'audio e avviare.
+                    Passo 1: Clicca su <strong>ATTIVA AUDIO</strong>. <br>Passo 2: Clicca su <strong>START</strong> per avviare il motore.
                 </div>
             </div>
         </section>
@@ -181,6 +187,7 @@
         const nmValue = document.getElementById('nmValue');
         
         const physicsText = document.getElementById('physicsText');
+        const audioBtn = document.getElementById('audioBtn');
         const engineBtn = document.getElementById('engineBtn');
         const gasPedal = document.getElementById('gasPedal');
         const brakePedal = document.getElementById('brakePedal');
@@ -207,7 +214,7 @@
         let gasPressed = false;
         let brakePressed = false;
 
-        // --- MOTORE AUDIO SINTETICO REALISTICO (WEB AUDIO API) ---
+        // --- MOTORE AUDIO HARDWARE FORCE-START ---
         let audioCtx = null;
         let mainOsc = null;
         let subOsc = null;
@@ -217,7 +224,7 @@
         let noiseGain = null;
 
         function createNoiseBuffer() {
-            let bufferSize = 2 * audioCtx.sampleRate;
+            let bufferSize = 2 * (audioCtx ? audioCtx.sampleRate : 44100);
             let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             let output = noiseBuffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -226,84 +233,82 @@
             return noiseBuffer;
         }
 
-        function initAudio() {
-            if (audioCtx) return;
+        // QUESTA FUNZIONE AVVIENE SOLO SOTTO CLICK DIRETTO ED ESPLICITO
+        audioBtn.addEventListener('click', () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                mainOsc = audioCtx.createOscillator();
+                mainOsc.type = 'sawtooth';
+                
+                subOsc = audioCtx.createOscillator();
+                subOsc.type = 'sawtooth'; // Cambiato a dente di sega per un suono ancora più ruvido e metallico
+
+                noiseNode = audioCtx.createBufferSource();
+                noiseNode.buffer = createNoiseBuffer();
+                noiseNode.loop = true;
+
+                noiseFilter = audioCtx.createBiquadFilter();
+                noiseFilter.type = 'bandpass';
+                noiseFilter.Q.setValueAtTime(4, audioCtx.currentTime);
+
+                noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+                mainGain = audioCtx.createGain();
+                mainGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+                mainOsc.connect(mainGain);
+                subOsc.connect(mainGain);
+                noiseNode.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                
+                mainGain.connect(audioCtx.destination);
+                noiseGain.connect(audioCtx.destination);
+
+                mainOsc.start();
+                subOsc.start();
+                noiseNode.start();
+            }
             
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Oscillatore Principale (Tono dello scarico a dente di sega)
-            mainOsc = audioCtx.createOscillator();
-            mainOsc.type = 'sawtooth';
-            
-            // Sub-Oscillatore (Dona corpo e vibrazione metallica ai bassi)
-            subOsc = audioCtx.createOscillator();
-            subOsc.type = 'triangle';
-
-            // Generatore di Rumore (Aspirazione del carburatore/airbox)
-            noiseNode = audioCtx.createBufferSource();
-            noiseNode.buffer = createNoiseBuffer();
-            noiseNode.loop = true;
-
-            noiseFilter = audioCtx.createBiquadFilter();
-            noiseFilter.type = 'bandpass';
-            noiseFilter.Q.setValueAtTime(3, audioCtx.currentTime);
-
-            noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
-
-            mainGain = audioCtx.createGain();
-            mainGain.gain.setValueAtTime(0, audioCtx.currentTime);
-
-            // Connessioni
-            mainOsc.connect(mainGain);
-            subOsc.connect(mainGain);
-            
-            noiseNode.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            
-            mainGain.connect(audioCtx.destination);
-
-            mainOsc.start();
-            subOsc.start();
-            noiseNode.start();
-        }
-
-        function updateAudio() {
-            if (!audioCtx) return;
-
-            // Sblocca il contesto se bloccato (Browser Policy)
-            if (audioCtx.state === 'suspended' && isEngineRunning) {
+            if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            
+            audioBtn.textContent = "✅ AUDIO PRONTO";
+            audioBtn.className = "audio-switch ready";
+            physicsText.innerHTML = "Audio sbloccato dal browser! Ora premi <strong>START</strong> per avviare il Rok.";
+        });
+
+        function updateAudio() {
+            if (!audioCtx || audioCtx.state === 'suspended') return;
 
             if (isEngineRunning && engineRpm > 100 && !isSeized) {
-                // Calcolo frequenza fondamentale (Frequenza raddoppiata per simulare il 2 tempi)
-                let hz = 45 + (engineRpm / MAX_RPM) * 260;
+                // Frequenza di campionamento del monocilindrico 2 tempi ad alti giri
+                let hz = 50 + (engineRpm / MAX_RPM) * 280;
                 
-                mainOsc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.03);
-                subOsc.frequency.setTargetAtTime(hz * 0.5, audioCtx.currentTime, 0.03);
+                mainOsc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.02);
+                subOsc.frequency.setTargetAtTime(hz * 0.5, audioCtx.currentTime, 0.02);
 
-                // Il filtro dell'airbox si apre dinamicamente in base ai giri e al gas
-                let filterFreq = 150 + (engineRpm / MAX_RPM) * 800 + (gasPressed ? 400 : 0);
-                noiseFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.04);
+                // Risonanza Airbox sotto carico
+                let filterFreq = 200 + (engineRpm / MAX_RPM) * 900 + (gasPressed ? 500 : 0);
+                noiseFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.03);
 
-                // Volumi bilanciati
-                let targetMainVol = gasPressed ? 0.28 : 0.08;
-                let targetNoiseVol = gasPressed ? 0.12 : 0.02;
+                // Incremento volumi complessivi per spingere le casse
+                let targetMainVol = gasPressed ? 0.45 : 0.12;
+                let targetNoiseVol = gasPressed ? 0.20 : 0.04;
 
-                // Modulazione tipica dello scoppiettio al minimo del 2T
-                if (engineRpm < 4000) {
-                    let crackle = 1 + Math.sin(audioCtx.currentTime * 35) * 0.3;
+                // Modulazione borbotti al minimo
+                if (engineRpm < 3800) {
+                    let crackle = 1 + Math.sin(audioCtx.currentTime * 40) * 0.4;
                     targetMainVol *= crackle;
                 }
 
-                mainGain.gain.setTargetAtTime(targetMainVol, audioCtx.currentTime, 0.04);
-                noiseGain.gain.setTargetAtTime(targetNoiseVol, audioCtx.currentTime, 0.04);
+                mainGain.gain.setTargetAtTime(targetMainVol, audioCtx.currentTime, 0.03);
+                noiseGain.gain.setTargetAtTime(targetNoiseVol, audioCtx.currentTime, 0.03);
             } else {
-                // Spegnimento o Grippaggio istantaneo
-                mainGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.02);
-                noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.02);
+                mainGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
+                noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
             }
         }
 
@@ -317,17 +322,11 @@
         bindPedal(gasPedal, true); bindPedal(brakePedal, false);
 
         engineBtn.addEventListener('click', () => {
-            // Inizializza l'audio al primo tocco utile dell'utente
-            initAudio();
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
             if (isSeized) {
                 isSeized = false; seizureType = ""; coldSeizureRisk = 0; hotSeizureRisk = 0;
                 waterTemp = 20.0; engineRpm = 0; speedKmh = 0;
                 engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
-                physicsText.innerHTML = "Motore rifatto a nuovo! Cilindro e pistone nuovi. Premi <strong>START</strong>.";
+                physicsText.innerHTML = "Motore rigenerato. Pistone e tolleranze ok. Premi <strong>START</strong>.";
                 return;
             }
 
@@ -370,7 +369,6 @@
             kwValue.textContent = currentKw.toFixed(1);
             nmValue.textContent = currentNm.toFixed(1);
 
-            // FISICA TERMODINAMICA
             if (isEngineRunning) {
                 let baseHeat = 0.002; 
                 let frictionHeat = Math.pow((engineRpm / MAX_RPM), 2) * 0.016; 
@@ -396,7 +394,6 @@
             if (waterTemp < 20) waterTemp = 20.0;
             if (waterTemp > 115) waterTemp = 115.0; 
 
-            // CONTROLLO DEI GRIPPAGGI
             if (isEngineRunning) {
                 if (waterTemp < 42 && engineRpm > 8500 && gasPressed) {
                     coldSeizureRisk += (engineRpm - 8500) * 0.00008; 
@@ -492,25 +489,25 @@
             let logHtml = "";
             if (isSeized) {
                 if (seizureType === "FREDDO") {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Hai tirato le marce a soli " + tempDisp + "°C! Il pistone si è stampato sulla canna. Clicca su Ripara.";
+                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Pistone dilatato a " + tempDisp + "°C. Banco inchiodato.";
                 } else {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Motore fuso a " + tempDisp + "°C! Il velo di olio della miscela è evaporato. Clicca su Ripara.";
+                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Rottura del velo d'olio a " + tempDisp + "°C. Clicca su Ripara.";
                 }
             } else if (!isEngineRunning) {
-                logHtml = "Motore spento.";
+                logHtml = "Motore pronto.";
             } else {
                 if (coldSeizureRisk > 0.4) {
-                    logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ RISK GRIPPAGGIO A FREDDO!</span><br>Chiudi il gas! Temperatura cilindro insufficiente per questi RPM!";
+                    logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ METTI GIÙ QUEL GAS!</span><br>Stai rischiando la grippata da freddo su un motore da 13.000 giri!";
                 } else if (hotSeizureRisk > 0.4 || waterTemp > 92) {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ SURRISCALDAMENTO CRITICO!</span><br>Dilatazione termica limite, rischio grippata imminente!";
+                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ SURRISCALDAMENTO!</span><br>Se non cali il passo si incolla la fascia elastica!";
                 } else if (waterTemp < 40 && speedKmh > 20) {
-                    logHtml = "<strong>⚠️ MOTORE FREDDO!</strong><br>Copri parzialmente il radiatore col nastro per far salire la temperatura.";
+                    logHtml = "<strong>⚠️ SOTTO TEMPERATURA</strong><br>Copri il radiatore o non entrerà mai nel range corretto.";
                 } else if (rpmDisp > 10500) {
-                    logHtml = "<strong>IN COPPIA (22 HP)</strong><br>Il Junior Rok sta esprimendo la massima risonanza nello scarico.";
+                    logHtml = "<strong>IN COPPIA FULL GAS</strong><br>Espansione in risonanza geometrica perfetta.";
                 } else if (speedKmh < 8) {
-                    logHtml = "<strong>MINIMO REGOLARE</strong><br>Lascialo scaldare sul carrellino fino a 45°C prima di entrare in pista.";
+                    logHtml = "<strong>MINIMO SCOPPIETTANTE</strong><br>Suono asimmetrico tipico del regime di minimo a 2 tempi.";
                 } else {
-                    logHtml = "<strong>IN MARCIA</strong><br>Scambio termico ottimale tra radiatore e flusso d'aria.";
+                    logHtml = "<strong>IN ACCELERAZIONE</strong><br>Erogazione lineare.";
                 }
             }
             if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
@@ -596,7 +593,7 @@
             ctx.fillStyle = "#020617"; ctx.fillRect(cx - pistW/2 - 1, pistTop + 12, pistW + 2, 3);
             
             ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(cx, pistY, 14, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill();
         }
 
         function drawRealisticSpark() {
