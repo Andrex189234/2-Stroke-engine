@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Junior Rok 125cc - Audio Hardware Fix</title>
+    <title>Vortex Junior Rok 125cc - Absolute Audio Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -142,7 +142,7 @@
                 </div>
 
                 <div class="panel-header" style="margin-bottom: 0.5rem; margin-top: 1rem;">
-                    <h2>Banco Prova (Dati in Tempo Reale)</h2>
+                    <h2>Banco Prova (Dati in Tempo Real)</h2>
                 </div>
                 <div class="dyno-grid">
                     <div class="dyno-box">
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Passo 1: Clicca su <strong>ATTIVA AUDIO</strong>.<br>Passo 2: Clicca su <strong>START</strong> per accendere. (Se usi iPhone/iPad, togli la modalità silenziosa hardware!)
+                    Clicca ovunque sullo schermo per sbloccare i canali audio, poi premi <strong>START</strong> per accendere.
                 </div>
             </div>
         </section>
@@ -214,7 +214,7 @@
         let gasPressed = false;
         let brakePressed = false;
 
-        // --- APPARATO AUDIO REGISTRATO DIRETTAMENTE ---
+        // --- SISTEMA AUDIO AD ALTA COMPATIBILITÀ ---
         let audioCtx = null;
         let mainOsc = null;
         let subOsc = null;
@@ -233,9 +233,9 @@
             return buffer;
         }
 
-        audioBtn.addEventListener('click', () => {
-            try {
-                if (!audioCtx) {
+        function unlockAudio() {
+            if (!audioCtx) {
+                try {
                     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                     audioCtx = new AudioContextClass();
                     
@@ -254,10 +254,10 @@
                     noiseFilter.Q.value = 4;
 
                     noiseGain = audioCtx.createGain();
-                    noiseGain.gain.value = 0;
+                    noiseGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
 
                     mainGain = audioCtx.createGain();
-                    mainGain.gain.value = 0;
+                    mainGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
 
                     mainOsc.connect(mainGain);
                     subOsc.connect(mainGain);
@@ -270,34 +270,45 @@
                     mainOsc.start(0);
                     subOsc.start(0);
                     noiseNode.start(0);
+                    
+                    // Forza un micro-impulso udibile per destare i filtri hardware dei telefoni
+                    mainGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    mainGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+                    
+                } catch (err) {
+                    physicsText.innerHTML = "Errore di inizializzazione audio: " + err.message;
+                    return;
                 }
-                
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                
-                audioBtn.textContent = "✅ AUDIO PRONTO";
-                audioBtn.className = "audio-switch ready";
-                physicsText.innerHTML = "Audio sbloccato correttamente! Premi <strong>START</strong> per accendere il kart.";
-            } catch (err) {
-                physicsText.innerHTML = "Errore di sblocco audio: " + err.message;
             }
-        });
+            
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            audioBtn.textContent = "✅ AUDIO PRONTO";
+            audioBtn.className = "audio-switch ready";
+        }
 
-        // ASSEGNAZIONE DIRETTA DEI VALORI SENZA TIMELINE OVERLAP
+        // Intercettazione globale dell'interazione per bypassare i blocchi dei browser mobile
+        audioBtn.addEventListener('click', unlockAudio);
+        engineBtn.addEventListener('click', unlockAudio);
+        canvas.addEventListener('click', unlockAudio);
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+
         function updateAudio() {
-            if (!audioCtx || audioCtx.state === 'suspended') return;
+            if (!audioCtx) return;
 
             if (isEngineRunning && engineRpm > 100 && !isSeized) {
                 let hz = 50 + (engineRpm / MAX_RPM) * 280;
                 
-                mainOsc.frequency.value = hz;
-                subOsc.frequency.value = hz * 0.5;
+                // Uso accoppiato di setValueAtTime sincronizzato sull'audio clock nativo
+                mainOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
+                subOsc.frequency.setValueAtTime(hz * 0.5, audioCtx.currentTime);
 
                 let filterFreq = 200 + (engineRpm / MAX_RPM) * 900 + (gasPressed ? 500 : 0);
-                noiseFilter.frequency.value = filterFreq;
+                noiseFilter.frequency.setValueAtTime(filterFreq, audioCtx.currentTime);
 
-                // Spinto il volume generale per saturare meglio le casse esterne
                 let targetMainVol = gasPressed ? 0.60 : 0.16;
                 let targetNoiseVol = gasPressed ? 0.25 : 0.05;
 
@@ -306,11 +317,12 @@
                     targetMainVol *= crackle;
                 }
 
-                mainGain.gain.value = targetMainVol;
-                noiseGain.gain.value = targetNoiseVol;
+                mainGain.gain.setValueAtTime(targetMainVol, audioCtx.currentTime);
+                noiseGain.gain.setValueAtTime(targetNoiseVol, audioCtx.currentTime);
             } else {
-                if (mainGain) mainGain.gain.value = 0;
-                if (noiseGain) noiseGain.gain.value = 0;
+                // Volume infinitesimale (inaudibile) al posto dello zero per impedire la disconnessione del nodo hardware
+                if (mainGain) mainGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                if (noiseGain) noiseGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
             }
         }
 
@@ -516,7 +528,7 @@
                     logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Dilatazione distruttiva.";
                 }
             } else if (!isEngineRunning) {
-                logHtml = "Motore pronto.";
+                logHtml = "Motore pronto. Tocca lo schermo per attivare l'audio hardware.";
             } else {
                 if (coldSeizureRisk > 0.4) {
                     logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ MOTORE FREDDO!</span><br>Rischio incollatura fascia ad alti RPM!";
