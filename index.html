@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vortex Junior Rok 125cc - Absolute Audio Fix</title>
+    <title>Vortex Junior Rok 125cc - Dynamic Carburetion</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -38,7 +38,7 @@
             border: 1px solid #1e293b; position: relative;
         }
 
-        canvas { max-width: 100%; height: auto; display: block; filter: contrast(1.1) saturate(1.1); }
+        canvas { max-width: 100%; height: auto; display: block; filter: contrast(1.1) saturate(1.1); cursor: pointer; }
 
         .controls-section { flex: 1 1 450px; display: flex; flex-direction: column; gap: 1rem; }
 
@@ -48,16 +48,10 @@
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: 0.5rem; }
         .panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); }
 
-        .audio-switch {
-            background: #2563eb; border: 1px solid #3b82f6; color: #fff; padding: 10px 15px;
-            font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s;
-        }
+        .audio-switch { background: #2563eb; border: 1px solid #3b82f6; color: #fff; padding: 10px 15px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .audio-switch.ready { background: #059669; border-color: #10b981; }
 
-        .engine-switch {
-            background: #334155; border: 1px solid #475569; color: #fff; padding: 10px 20px;
-            font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 120px; text-align: center;
-        }
+        .engine-switch { background: #334155; border: 1px solid #475569; color: #fff; padding: 10px 20px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 120px; text-align: center; }
         .engine-switch.on { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
         .engine-switch.seized { background: var(--accent-red); border-color: #f87171; animation: pulse 1s infinite alternate; }
 
@@ -84,12 +78,25 @@
         .bar-fill.speed { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); }
         .bar-fill.temp { background: var(--accent-blue); }
 
-        .pedals-container { display: flex; gap: 1rem; margin-top: 0.5rem; }
-        .pedal {
-            flex: 1; padding: 1.5rem 1rem; text-align: center; border-radius: 10px; font-weight: 800; font-size: 1.2rem;
-            letter-spacing: 1px; cursor: pointer; user-select: none; transition: 0.1s;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.6); opacity: 0.3; pointer-events: none;
+        /* CARBURATOR SLIDER STYLES */
+        .carb-container { background: #0b0f19; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem; }
+        .carb-slider {
+            -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; 
+            background: linear-gradient(90deg, var(--accent-red) 0%, var(--accent-green) 50%, var(--accent-blue) 100%);
+            outline: none; margin: 10px 0;
         }
+        .carb-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%;
+            background: #cbd5e1; cursor: pointer; border: 3px solid #020617; box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        .carb-slider::-moz-range-thumb {
+            width: 24px; height: 24px; border-radius: 50%; background: #cbd5e1;
+            cursor: pointer; border: 3px solid #020617; box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        .carb-labels { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+
+        .pedals-container { display: flex; gap: 1rem; margin-top: 0.5rem; }
+        .pedal { flex: 1; padding: 1.5rem 1rem; text-align: center; border-radius: 10px; font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; cursor: pointer; user-select: none; transition: 0.1s; box-shadow: 0 6px 0 rgba(0,0,0,0.6); opacity: 0.3; pointer-events: none; }
         .pedal.active { opacity: 1; pointer-events: auto; }
         .pedal:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(0,0,0,0); filter: brightness(1.2); }
         .gas-pedal { background: var(--accent-green); color: #022c22; border: 1px solid #6ee7b7; }
@@ -141,9 +148,18 @@
                     <div class="display-value temp" id="tempValue">20.0°</div>
                 </div>
 
-                <div class="panel-header" style="margin-bottom: 0.5rem; margin-top: 1rem;">
-                    <h2>Banco Prova (Dati in Tempo Real)</h2>
+                <div class="carb-container">
+                    <div class="panel-header" style="margin-bottom: 0;">
+                        <h2>Carburazione</h2>
+                        <span id="carbStatus" style="font-size: 0.75rem; color: var(--accent-green); font-weight: 800;">OTTIMALE</span>
+                    </div>
+                    <input type="range" id="carbSlider" class="carb-slider" min="-50" max="50" value="0">
+                    <div class="carb-labels">
+                        <span style="color: var(--accent-red)">MAGRA (Caldo/Picco)</span>
+                        <span style="color: var(--accent-blue)">GRASSA (Freddo/Affoga)</span>
+                    </div>
                 </div>
+
                 <div class="dyno-grid">
                     <div class="dyno-box">
                         <div class="dyno-val" id="hpValue">0.0</div>
@@ -165,7 +181,7 @@
                 </div>
 
                 <div class="physics-log" id="physicsText">
-                    Clicca ovunque sullo schermo per sbloccare i canali audio, poi premi <strong>START</strong> per accendere.
+                    <strong>Tocca un punto qualsiasi dello schermo</strong> per eseguire lo sblocco hardware dell'audio.
                 </div>
             </div>
         </section>
@@ -186,6 +202,9 @@
         const kwValue = document.getElementById('kwValue');
         const nmValue = document.getElementById('nmValue');
         
+        const carbSlider = document.getElementById('carbSlider');
+        const carbStatus = document.getElementById('carbStatus');
+
         const physicsText = document.getElementById('physicsText');
         const audioBtn = document.getElementById('audioBtn');
         const engineBtn = document.getElementById('engineBtn');
@@ -206,184 +225,172 @@
         let waterTemp = 20.0; 
         
         const MIN_RPM = 2800; 
-        const MAX_RPM = 13800;
+        const BASE_MAX_RPM = 13800;
         const MAX_SPEED = 122; 
         const CLUTCH_BITE = 4200; 
-        const RPM_PER_KMH = MAX_RPM / MAX_SPEED; 
+        
+        let currentMaxRpm = BASE_MAX_RPM;
+        let rpmPerKmh = currentMaxRpm / MAX_SPEED;
 
         let gasPressed = false;
         let brakePressed = false;
+        let carburetion = 0; // -50 (Magra) a +50 (Grassa)
 
-        // --- SISTEMA AUDIO AD ALTA COMPATIBILITÀ ---
+        // Variabili Sistema Audio
         let audioCtx = null;
-        let mainOsc = null;
-        let subOsc = null;
-        let noiseNode = null;
-        let mainGain = null;
-        let noiseFilter = null;
-        let noiseGain = null;
+        let mainOsc = null, subOsc = null, noiseNode = null;
+        let mainGain = null, noiseFilter = null, noiseGain = null;
+        let sputterOsc = null, sputterGain = null; // Aggiunta per simulare borbottio
+        let audioUnlocked = false;
 
-        function createNoiseBuffer() {
-            let size = 44100 * 2;
-            let buffer = audioCtx.createBuffer(1, size, 44100);
-            let data = buffer.getChannelData(0);
-            for (let i = 0; i < size; i++) {
-                data[i] = Math.random() * 2 - 1;
+        carbSlider.addEventListener('input', (e) => {
+            carburetion = parseInt(e.target.value);
+            if (carburetion < -15) {
+                carbStatus.textContent = "MAGRA"; carbStatus.style.color = "var(--accent-red)";
+            } else if (carburetion > 15) {
+                carbStatus.textContent = "GRASSA"; carbStatus.style.color = "var(--accent-blue)";
+            } else {
+                carbStatus.textContent = "OTTIMALE"; carbStatus.style.color = "var(--accent-green)";
             }
+        });
+
+        function createNoiseBuffer(ctx) {
+            let size = ctx.sampleRate * 2; let buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+            let data = buffer.getChannelData(0); for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
             return buffer;
         }
 
-        function unlockAudio() {
-            if (!audioCtx) {
-                try {
-                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    audioCtx = new AudioContextClass();
-                    
-                    mainOsc = audioCtx.createOscillator();
-                    mainOsc.type = 'sawtooth';
-                    
-                    subOsc = audioCtx.createOscillator();
-                    subOsc.type = 'sawtooth';
+        function unlockAudioSystem() {
+            if (audioUnlocked) return;
+            try {
+                if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContextClass();
+                const emptyBuffer = audioCtx.createBuffer(1, 1, 22050); const unlockSource = audioCtx.createBufferSource(); unlockSource.buffer = emptyBuffer; unlockSource.connect(audioCtx.destination); unlockSource.start(0);
 
-                    noiseNode = audioCtx.createBufferSource();
-                    noiseNode.buffer = createNoiseBuffer();
-                    noiseNode.loop = true;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                    noiseFilter = audioCtx.createBiquadFilter();
-                    noiseFilter.type = 'bandpass';
-                    noiseFilter.Q.value = 4;
+                mainOsc = audioCtx.createOscillator(); mainOsc.type = 'sawtooth';
+                subOsc = audioCtx.createOscillator(); subOsc.type = 'sawtooth';
+                
+                noiseNode = audioCtx.createBufferSource(); noiseNode.buffer = createNoiseBuffer(audioCtx); noiseNode.loop = true;
+                noiseFilter = audioCtx.createBiquadFilter(); noiseFilter.type = 'bandpass'; noiseFilter.Q.value = 4;
 
-                    noiseGain = audioCtx.createGain();
-                    noiseGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                // Modulatore per il borbottio da "carburazione grassa"
+                sputterOsc = audioCtx.createOscillator(); sputterOsc.type = 'sine'; sputterOsc.frequency.value = 15;
+                sputterGain = audioCtx.createGain(); sputterGain.gain.value = 0;
 
-                    mainGain = audioCtx.createGain();
-                    mainGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0;
+                mainGain = audioCtx.createGain(); mainGain.gain.value = 0;
 
-                    mainOsc.connect(mainGain);
-                    subOsc.connect(mainGain);
-                    noiseNode.connect(noiseFilter);
-                    noiseFilter.connect(noiseGain);
-                    
-                    mainGain.connect(audioCtx.destination);
-                    noiseGain.connect(audioCtx.destination);
+                mainOsc.connect(mainGain); subOsc.connect(mainGain);
+                sputterOsc.connect(sputterGain.gain); // Modula il volume base
+                
+                noiseNode.connect(noiseFilter); noiseFilter.connect(noiseGain);
+                
+                mainGain.connect(audioCtx.destination); noiseGain.connect(audioCtx.destination);
 
-                    mainOsc.start(0);
-                    subOsc.start(0);
-                    noiseNode.start(0);
-                    
-                    // Forza un micro-impulso udibile per destare i filtri hardware dei telefoni
-                    mainGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    mainGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
-                    
-                } catch (err) {
-                    physicsText.innerHTML = "Errore di inizializzazione audio: " + err.message;
-                    return;
-                }
-            }
-            
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
-            audioBtn.textContent = "✅ AUDIO PRONTO";
-            audioBtn.className = "audio-switch ready";
+                mainOsc.start(0); subOsc.start(0); noiseNode.start(0); sputterOsc.start(0);
+                
+                audioUnlocked = true; audioBtn.textContent = "✅ AUDIO SBLOCCATO"; audioBtn.className = "audio-switch ready";
+                document.removeEventListener('pointerdown', unlockAudioSystem); document.removeEventListener('touchstart', unlockAudioSystem);
+            } catch (err) { physicsText.innerHTML = "<span style='color:var(--accent-red)'>Errore Audio: " + err.message + "</span>"; }
         }
 
-        // Intercettazione globale dell'interazione per bypassare i blocchi dei browser mobile
-        audioBtn.addEventListener('click', unlockAudio);
-        engineBtn.addEventListener('click', unlockAudio);
-        canvas.addEventListener('click', unlockAudio);
-        document.addEventListener('click', unlockAudio);
-        document.addEventListener('touchstart', unlockAudio);
+        document.addEventListener('pointerdown', unlockAudioSystem);
+        document.addEventListener('touchstart', unlockAudioSystem, { passive: true });
+        audioBtn.addEventListener('click', unlockAudioSystem);
+        engineBtn.addEventListener('click', unlockAudioSystem);
 
         function updateAudio() {
-            if (!audioCtx) return;
+            if (!audioUnlocked || !audioCtx) return;
 
             if (isEngineRunning && engineRpm > 100 && !isSeized) {
-                let hz = 50 + (engineRpm / MAX_RPM) * 280;
-                
-                // Uso accoppiato di setValueAtTime sincronizzato sull'audio clock nativo
-                mainOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
-                subOsc.frequency.setValueAtTime(hz * 0.5, audioCtx.currentTime);
+                if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                let filterFreq = 200 + (engineRpm / MAX_RPM) * 900 + (gasPressed ? 500 : 0);
-                noiseFilter.frequency.setValueAtTime(filterFreq, audioCtx.currentTime);
+                let hz = 50 + (engineRpm / BASE_MAX_RPM) * 280;
+                // Carburazione magra rende il suono più acuto e metallico
+                if (carburetion < 0) hz *= (1.0 + (Math.abs(carburetion)/50) * 0.15);
+                
+                mainOsc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.05);
+                subOsc.frequency.setTargetAtTime(hz * 0.5, audioCtx.currentTime, 0.05);
+
+                let filterFreq = 200 + (engineRpm / BASE_MAX_RPM) * 900 + (gasPressed ? 500 : 0);
+                // Carburazione grassa chiude le frequenze (suono cupo)
+                if (carburetion > 0) filterFreq -= (carburetion * 12);
+                // Carburazione magra apre le frequenze (suono aperto)
+                if (carburetion < 0) filterFreq += (Math.abs(carburetion) * 15);
+                
+                noiseFilter.frequency.setTargetAtTime(filterFreq, audioCtx.currentTime, 0.05);
 
                 let targetMainVol = gasPressed ? 0.60 : 0.16;
                 let targetNoiseVol = gasPressed ? 0.25 : 0.05;
 
-                if (engineRpm < 3800) {
-                    let crackle = 1 + Math.sin(Date.now() * 0.04) * 0.4;
-                    targetMainVol *= crackle;
+                // Borbottio (Tartagliamento) se grassa
+                if (carburetion > 15 && engineRpm < 10000) {
+                    sputterOsc.frequency.setTargetAtTime(10 + (engineRpm/1000), audioCtx.currentTime, 0.1);
+                    let sputterDepth = (carburetion / 50) * 0.8;
+                    targetMainVol *= (1.0 - (Math.sin(audioCtx.currentTime * sputterOsc.frequency.value) * sputterDepth));
                 }
 
-                mainGain.gain.setValueAtTime(targetMainVol, audioCtx.currentTime);
-                noiseGain.gain.setValueAtTime(targetNoiseVol, audioCtx.currentTime);
+                if (engineRpm < 3800) { let crackle = 1 + Math.sin(Date.now() * 0.04) * 0.4; targetMainVol *= crackle; }
+
+                mainGain.gain.setTargetAtTime(targetMainVol, audioCtx.currentTime, 0.05);
+                noiseGain.gain.setTargetAtTime(targetNoiseVol, audioCtx.currentTime, 0.05);
             } else {
-                // Volume infinitesimale (inaudibile) al posto dello zero per impedire la disconnessione del nodo hardware
-                if (mainGain) mainGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-                if (noiseGain) noiseGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                mainGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
             }
         }
 
         function bindPedal(element, isGas) {
-            const press = (e) => { 
-                e.preventDefault(); 
-                if(isEngineRunning && !isSeized) { 
-                    if(isGas) gasPressed = true; else brakePressed = true; 
-                } 
-            };
-            const release = (e) => { 
-                e.preventDefault(); 
-                if(isGas) gasPressed = false; else brakePressed = false; 
-            };
-            
-            element.addEventListener('mousedown', press); 
-            element.addEventListener('mouseup', release); 
-            element.addEventListener('mouseleave', release);
-            
-            element.addEventListener('touchstart', press, {passive: false}); 
-            element.addEventListener('touchend', release, {passive: false});
+            const press = (e) => { e.preventDefault(); if(isEngineRunning && !isSeized) { if(isGas) gasPressed = true; else brakePressed = true; } };
+            const release = (e) => { e.preventDefault(); if(isGas) gasPressed = false; else brakePressed = false; };
+            element.addEventListener('pointerdown', press); element.addEventListener('pointerup', release); element.addEventListener('pointerleave', release);
+            element.addEventListener('touchstart', press, {passive: false}); element.addEventListener('touchend', release, {passive: false});
         }
         
-        bindPedal(gasPedal, true); 
-        bindPedal(brakePedal, false);
+        bindPedal(gasPedal, true); bindPedal(brakePedal, false);
 
         engineBtn.addEventListener('click', () => {
             if (isSeized) {
-                isSeized = false; seizureType = ""; coldSeizureRisk = 0; hotSeizureRisk = 0;
-                waterTemp = 20.0; engineRpm = 0; speedKmh = 0;
+                isSeized = false; seizureType = ""; coldSeizureRisk = 0; hotSeizureRisk = 0; waterTemp = 20.0; engineRpm = 0; speedKmh = 0;
                 engineBtn.textContent = "Start"; engineBtn.className = "engine-switch";
-                physicsText.innerHTML = "Motore rigenerato. Premi <strong>START</strong>.";
-                return;
+                physicsText.innerHTML = "Motore rigenerato. Premi <strong>START</strong>."; return;
             }
-
             isEngineRunning = !isEngineRunning;
-            if (isEngineRunning) {
-                gasPedal.classList.add('active'); 
-                brakePedal.classList.add('active');
-                engineBtn.textContent = "Stop"; 
-                engineBtn.className = "engine-switch on";
-                if(engineRpm < MIN_RPM) engineRpm = MIN_RPM;
-            } else {
-                gasPedal.classList.remove('active'); 
-                brakePedal.classList.remove('active');
-                gasPressed = false; 
-                brakePressed = false;
-                engineBtn.textContent = "Start"; 
-                engineBtn.className = "engine-switch";
-            }
+            if (isEngineRunning) { gasPedal.classList.add('active'); brakePedal.classList.add('active'); engineBtn.textContent = "Stop"; engineBtn.className = "engine-switch on"; if(engineRpm < MIN_RPM) engineRpm = MIN_RPM; } 
+            else { gasPedal.classList.remove('active'); brakePedal.classList.remove('active'); gasPressed = false; brakePressed = false; engineBtn.textContent = "Start"; engineBtn.className = "engine-switch"; }
         });
 
         function updatePhysics() {
             if (isSeized) {
-                engineRpm = 0; gasPressed = false;
-                speedKmh -= speedKmh * 0.08;
-                if(speedKmh < 0.5) speedKmh = 0;
-                return;
+                engineRpm = 0; gasPressed = false; speedKmh -= speedKmh * 0.08; if(speedKmh < 0.5) speedKmh = 0; return;
             }
 
             let currentNm = 0; let currentHp = 0; let currentKw = 0;
+            
+            // --- LOGICA DELLA CARBURAZIONE ---
+            let powerMod = 1.0;
+            let heatMod = 1.0;
+            currentMaxRpm = BASE_MAX_RPM;
+
+            if (carburetion < 0) {
+                // MAGRA: Più potenza (picco), tantissimo calore
+                let leanFactor = Math.abs(carburetion) / 50; // 0 a 1
+                if (leanFactor <= 0.4) {
+                    powerMod = 1.0 + (leanFactor * 0.08); // +8% max potenza se poco magra
+                } else {
+                    powerMod = 1.0 - ((leanFactor - 0.4) * 0.8); // Manca benzina per accendere, crollo potenza
+                }
+                heatMod = 1.0 + (leanFactor * 3.5); // Fino a +350% calore
+            } else if (carburetion > 0) {
+                // GRASSA: Meno potenza, motore affoga, gira fresco
+                let richFactor = carburetion / 50; // 0 a 1
+                powerMod = 1.0 - (richFactor * 0.45); // Fino a -45% potenza
+                heatMod = 1.0 - (richFactor * 0.6); // Meno calore, ottima lubrificazione
+                currentMaxRpm -= (richFactor * 3500); // Limitatore naturale dovuto alla miscela densa
+            }
+            rpmPerKmh = currentMaxRpm / MAX_SPEED;
 
             if (isEngineRunning && engineRpm > 1000) {
                 let baseNm = 5; 
@@ -391,218 +398,173 @@
                 let loadFactor = (engineRpm > CLUTCH_BITE && speedKmh > 5) ? 1.0 : 0.6;
                 if (!gasPressed) loadFactor = 0.1;
 
-                currentNm = (baseNm + boostNm) * loadFactor;
-                if(engineRpm > 13500) currentNm *= (1 - (engineRpm - 13500)/300);
+                currentNm = (baseNm + boostNm) * loadFactor * powerMod;
+                if(engineRpm > currentMaxRpm) currentNm *= (1 - (engineRpm - currentMaxRpm)/300);
                 if(currentNm < 0) currentNm = 0;
 
                 currentHp = (currentNm * engineRpm) / 7120;
                 currentKw = currentHp * 0.7457;
             }
 
-            hpValue.textContent = currentHp.toFixed(1);
-            kwValue.textContent = currentKw.toFixed(1);
-            nmValue.textContent = currentNm.toFixed(1);
+            hpValue.textContent = currentHp.toFixed(1); kwValue.textContent = currentKw.toFixed(1); nmValue.textContent = currentNm.toFixed(1);
 
+            // --- GESTIONE TEMPERATURE ---
             if (isEngineRunning) {
                 let baseHeat = 0.002; 
-                let frictionHeat = Math.pow((engineRpm / MAX_RPM), 2) * 0.016; 
-                let powerHeat = currentHp * 0.0045; 
+                let frictionHeat = Math.pow((engineRpm / BASE_MAX_RPM), 2) * 0.016; 
+                let powerHeat = (currentHp * 0.0045) * heatMod; // Il calore è pesantemente influenzato dalla carburazione
                 let heatGen = baseHeat + frictionHeat + powerHeat; 
                 
                 let airflowCooling = (speedKmh / MAX_SPEED) * 0.075; 
                 let thermostatFactor = 1.0;
+                if (waterTemp < 45) thermostatFactor = 0.08; 
+                else if (waterTemp < 62) thermostatFactor = 0.08 + ((waterTemp - 45) / 17) * 0.92;
                 
-                if (waterTemp < 45) {
-                    thermostatFactor = 0.08; 
-                } else if (waterTemp < 62) {
-                    thermostatFactor = 0.08 + ((waterTemp - 45) / 17) * 0.92;
-                }
                 airflowCooling *= thermostatFactor;
                 let passiveCooling = (waterTemp - 20) * 0.0002; 
                 
                 waterTemp += heatGen - airflowCooling - passiveCooling;
-            } else {
-                waterTemp -= (waterTemp - 20) * 0.0005; 
-            }
+            } else { waterTemp -= (waterTemp - 20) * 0.0005; }
             
-            if (waterTemp < 20) waterTemp = 20.0;
-            if (waterTemp > 115) waterTemp = 115.0; 
+            if (waterTemp < 20) waterTemp = 20.0; if (waterTemp > 125) waterTemp = 125.0; 
 
+            // --- DANNI E GRIPPAGGI ---
             if (isEngineRunning) {
+                // Rischio a Freddo (Incollatura)
                 if (waterTemp < 42 && engineRpm > 8500 && gasPressed) {
                     coldSeizureRisk += (engineRpm - 8500) * 0.00008; 
-                    if (coldSeizureRisk >= 1.0) {
-                        isSeized = true; seizureType = "FREDDO"; isEngineRunning = false;
-                    }
-                } else {
-                    coldSeizureRisk = Math.max(0, coldSeizureRisk - 0.003);
-                }
+                    if (coldSeizureRisk >= 1.0) { isSeized = true; seizureType = "FREDDO"; isEngineRunning = false; }
+                } else { coldSeizureRisk = Math.max(0, coldSeizureRisk - 0.003); }
 
-                if (waterTemp > 94) {
-                    let thermalLoad = (waterTemp - 94) * 0.0006;
+                // Rischio a Caldo (Dilatazione pistone - accentuato da carburazione magra)
+                let tempThreshold = 94;
+                if (carburetion < -20) tempThreshold = 88; // Se magra sbielli prima
+                
+                if (waterTemp > tempThreshold) {
+                    let thermalLoad = (waterTemp - tempThreshold) * 0.0006;
                     if (gasPressed) thermalLoad *= 2.5;
-                    hotSeizureRisk += thermalLoad;
+                    // Malus se magra
+                    if (carburetion < 0) thermalLoad *= (1 + (Math.abs(carburetion)/50) * 3);
                     
-                    if (hotSeizureRisk >= 1.0 || waterTemp > 108) {
-                        isSeized = true; seizureType = "CALDO"; isEngineRunning = false;
-                    }
-                } else {
-                    hotSeizureRisk = Math.max(0, hotSeizureRisk - 0.005);
-                }
+                    hotSeizureRisk += thermalLoad;
+                    if (hotSeizureRisk >= 1.0 || waterTemp > 115) { isSeized = true; seizureType = "CALDO"; isEngineRunning = false; }
+                } else { hotSeizureRisk = Math.max(0, hotSeizureRisk - 0.005); }
             }
 
-            if (!isEngineRunning) {
-                engineRpm -= engineRpm * 0.05;
-                speedKmh -= speedKmh * 0.01;
-                return;
-            }
+            if (!isEngineRunning) { engineRpm -= engineRpm * 0.05; speedKmh -= speedKmh * 0.01; return; }
 
-            let aeroDrag = (speedKmh * speedKmh) * 0.000035; 
-            let rollingDrag = 0.08; 
+            // --- CINEMATICA ---
+            let aeroDrag = (speedKmh * speedKmh) * 0.000035; let rollingDrag = 0.08; 
 
             if (speedKmh < 8) { 
                 if (gasPressed) {
-                    engineRpm += 550; 
-                    if (engineRpm > CLUTCH_BITE) {
-                        speedKmh += 0.85; engineRpm -= 180; 
-                    }
-                } else if (brakePressed) {
-                    speedKmh = 0; engineRpm += (MIN_RPM - engineRpm) * 0.15;
-                } else {
-                    speedKmh -= rollingDrag; engineRpm += (MIN_RPM - engineRpm) * 0.1;
-                }
+                    let rpmBump = carburetion > 20 ? 300 : 550; // Se grassa, sale di giri lentissimo
+                    engineRpm += rpmBump; 
+                    if (engineRpm > CLUTCH_BITE) { speedKmh += 0.85; engineRpm -= 180; }
+                } else if (brakePressed) { speedKmh = 0; engineRpm += (MIN_RPM - engineRpm) * 0.15; } 
+                else { speedKmh -= rollingDrag; engineRpm += (MIN_RPM - engineRpm) * 0.1; }
                 if (speedKmh < 0) speedKmh = 0;
             } else {
                 if (gasPressed) {
                     let push = currentNm / 7.8; 
                     speedKmh += push - aeroDrag - rollingDrag;
-                } else if (brakePressed) {
-                    speedKmh -= 2.8; 
-                } else {
-                    speedKmh -= (aeroDrag + rollingDrag + 0.2); 
-                }
+                } else if (brakePressed) { speedKmh -= 2.8; } 
+                else { speedKmh -= (aeroDrag + rollingDrag + 0.2); }
                 
                 if (speedKmh > MAX_SPEED) speedKmh = MAX_SPEED;
                 if (speedKmh < 0) speedKmh = 0;
 
-                let targetRpm = speedKmh * RPM_PER_KMH;
+                let targetRpm = speedKmh * rpmPerKmh;
                 engineRpm += (targetRpm - engineRpm) * 0.4;
             }
 
-            if (engineRpm > MAX_RPM) engineRpm = MAX_RPM - (Math.random()*150); 
+            if (engineRpm > currentMaxRpm) engineRpm = currentMaxRpm - (Math.random()*150); 
             if (engineRpm < MIN_RPM && isEngineRunning && speedKmh < 2) engineRpm = MIN_RPM + (Math.random()*50);
         }
 
         function updateUI() {
-            let rpmDisp = Math.round(engineRpm);
-            let speedDisp = Math.floor(speedKmh);
-            let tempDisp = waterTemp.toFixed(1);
+            let rpmDisp = Math.round(engineRpm); let speedDisp = Math.floor(speedKmh); let tempDisp = waterTemp.toFixed(1);
+            rpmDisplay.textContent = rpmDisp; speedDisplay.textContent = speedDisp; tempDisplay.textContent = tempDisp + "°";
 
-            rpmDisplay.textContent = rpmDisp;
-            speedDisplay.textContent = speedDisp;
-            tempDisplay.textContent = tempDisp + "°";
-
-            rpmBar.style.width = (rpmDisp / MAX_RPM) * 100 + "%";
-            speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
+            rpmBar.style.width = (rpmDisp / BASE_MAX_RPM) * 100 + "%"; speedBar.style.width = (speedKmh / MAX_SPEED) * 100 + "%";
             tempBar.style.width = Math.min(100, (waterTemp - 20) / 80 * 100) + "%";
 
-            if (waterTemp < 40) {
-                tempBar.style.background = "var(--accent-blue)"; tempDisplay.style.color = "var(--accent-blue)";
-            } else if (waterTemp < 55) {
-                tempBar.style.background = "var(--accent-green)"; tempDisplay.style.color = "var(--accent-green)";
-            } else {
-                tempBar.style.background = "var(--accent-red)"; tempDisplay.style.color = "var(--accent-red)";
-            }
+            if (waterTemp < 40) { tempBar.style.background = "var(--accent-blue)"; tempDisplay.style.color = "var(--accent-blue)"; } 
+            else if (waterTemp < 55) { tempBar.style.background = "var(--accent-green)"; tempDisplay.style.color = "var(--accent-green)"; } 
+            else { tempBar.style.background = "var(--accent-red)"; tempDisplay.style.color = "var(--accent-red)"; }
 
-            if (isSeized) {
-                engineBtn.textContent = "RIPARA / RESET";
-                engineBtn.className = "engine-switch seized";
-                gasPedal.classList.remove('active'); brakePedal.classList.remove('active');
-            }
+            if (isSeized) { engineBtn.textContent = "RIPARA / RESET"; engineBtn.className = "engine-switch seized"; gasPedal.classList.remove('active'); brakePedal.classList.remove('active'); }
 
             let logHtml = "";
             if (isSeized) {
-                if (seizureType === "FREDDO") {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Tolleranze azzerate.";
-                } else {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Dilatazione distruttiva.";
-                }
-            } else if (!isEngineRunning) {
-                logHtml = "Motore pronto. Tocca lo schermo per attivare l'audio hardware.";
-            } else {
-                if (coldSeizureRisk > 0.4) {
-                    logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ MOTORE FREDDO!</span><br>Rischio incollatura fascia ad alti RPM!";
-                } else if (hotSeizureRisk > 0.4 || waterTemp > 92) {
-                    logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ SURRISCALDAMENTO!</span><br>Molla il gas.";
-                } else if (rpmDisp > 10500) {
-                    logHtml = "<strong>IN COPPIA FULL GAS</strong>";
-                } else if (speedKmh < 8) {
-                    logHtml = "<strong>MINIMO SCOPPIETTANTE</strong>";
-                } else {
-                    logHtml = "<strong>IN ACCELERAZIONE</strong>";
-                }
+                if (seizureType === "FREDDO") logHtml = "<span style='color:var(--accent-red); font-weight:800;'>💥 GRIPPAGGIO DA FREDDO!</span><br>Tolleranze azzerate.";
+                else logHtml = "<span style='color:var(--accent-red); font-weight:800;'>🔥 GRIPPAGGIO DA CALDO!</span><br>Dilatazione distruttiva. Miscela troppo magra!";
+            } else if (!isEngineRunning) { logHtml = audioUnlocked ? "Motore pronto. Controlla la carburazione e premi <strong>START</strong>." : "Tocca lo schermo per sbloccare l'audio hardware."; } 
+            else {
+                if (carburetion < -25) { logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ MISCELA PERICOLOSAMENTE MAGRA!</span><br>Rischio fusione cielo pistone."; }
+                else if (carburetion > 25) { logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>💧 MOTORE AFFOGATO</span><br>Troppa benzina, non sale di giri."; }
+                else if (coldSeizureRisk > 0.4) { logHtml = "<span style='color:var(--accent-blue); font-weight:800;'>⚠️ MOTORE FREDDO!</span><br>Scalda prima di dare gas!"; } 
+                else if (hotSeizureRisk > 0.4 || waterTemp > 92) { logHtml = "<span style='color:var(--accent-red); font-weight:800;'>⚠️ SURRISCALDAMENTO!</span><br>Ingrassa la carburazione o rallenta!"; } 
+                else if (rpmDisp > 10500) { logHtml = "<strong>IN COPPIA FULL GAS</strong>"; } 
+                else if (speedKmh < 8) { logHtml = "<strong>MINIMO SCOPPIETTANTE</strong>"; } 
+                else { logHtml = "<strong>IN ACCELERAZIONE</strong>"; }
             }
             if(physicsText.innerHTML !== logHtml) physicsText.innerHTML = logHtml;
         }
 
         function draw() {
-            updatePhysics();
-            updateUI();
-            updateAudio();
-
-            if (engineRpm > 0 && !isSeized) {
-                angle += (engineRpm / 60) * 0.075; 
-                if (angle >= Math.PI * 2) angle -= Math.PI * 2;
-            }
+            updatePhysics(); updateUI(); updateAudio();
+            if (engineRpm > 0 && !isSeized) { angle += (engineRpm / 60) * 0.075; if (angle >= Math.PI * 2) angle -= Math.PI * 2; }
             
-            const crankX = cx + crankRadius * Math.sin(angle);
-            const crankY = cy - crankRadius * Math.cos(angle);
+            const crankX = cx + crankRadius * Math.sin(angle); const crankY = cy - crankRadius * Math.cos(angle);
             let deltaX = Math.abs(crankX - cx); if (deltaX > conrodLen) deltaX = conrodLen;
             const pistY = crankY - Math.sqrt(Math.pow(conrodLen, 2) - Math.pow(deltaX, 2));
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             drawEngineBlockAndCooling(engineRpm > 8800 && !isSeized, waterTemp);
             drawCombustion(pistY, angle, engineRpm);
             drawMovingParts(pistY, crankX, crankY);
             
             if (isEngineRunning && engineRpm > 500 && !isSeized) {
-                if (angle < 0.25 || angle > Math.PI * 2 - 0.25) drawRealisticSpark();
+                if (angle < 0.25 || angle > Math.PI * 2 - 0.25) {
+                    // Manca l'accensione se troppo grassa o troppo magra in certe condizioni
+                    if (!(carburetion > 35 && Math.random() > 0.6) && !(carburetion < -40 && Math.random() > 0.8)) drawRealisticSpark();
+                }
             }
-
             requestAnimationFrame(draw);
         }
 
         function drawEngineBlockAndCooling(valveOpen, temp) {
-            ctx.fillStyle = "#1e293b"; ctx.fillRect(cx - 100, cylTop + 10, 200, cy - cylTop - 80);
-            ctx.fillStyle = "#0c0f17"; ctx.fillRect(cx - pistW/2 - 4, cylTop, pistW + 8, cy - cylTop);
-
-            let heatRatio = Math.max(0, Math.min(1, (temp - 20) / 70));
-            let r = Math.floor(2 + (230 * heatRatio)); let g = Math.floor(132 - (100 * heatRatio)); let b = Math.floor(199 - (150 * heatRatio));
+            ctx.fillStyle = "#1e293b"; ctx.fillRect(cx - 100, cylTop + 10, 200, cy - cylTop - 80); ctx.fillStyle = "#0c0f17"; ctx.fillRect(cx - pistW/2 - 4, cylTop, pistW + 8, cy - cylTop);
+            let heatRatio = Math.max(0, Math.min(1, (temp - 20) / 70)); let r = Math.floor(2 + (230 * heatRatio)); let g = Math.floor(132 - (100 * heatRatio)); let b = Math.floor(199 - (150 * heatRatio));
             if (isSeized && seizureType === "CALDO") { r = 255; g = 50; b = 50; }
-
-            const waterGrad = ctx.createLinearGradient(0, cylTop, 0, cy - 80);
-            waterGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`); waterGrad.addColorStop(1, `rgb(${Math.floor(r*0.5)}, ${Math.floor(g*0.5)}, ${Math.floor(b*0.5)})`);
+            const waterGrad = ctx.createLinearGradient(0, cylTop, 0, cy - 80); waterGrad.addColorStop(0, `rgb(${r}, ${g}, ${b})`); waterGrad.addColorStop(1, `rgb(${Math.floor(r*0.5)}, ${Math.floor(g*0.5)}, ${Math.floor(b*0.5)})`);
             ctx.fillStyle = waterGrad; ctx.fillRect(cx - 95, cylTop + 15, 35, cy - cylTop - 95); ctx.fillRect(cx + 60, cylTop + 15, 35, cy - cylTop - 95); 
 
-            const headGrad = ctx.createLinearGradient(cx - 100, 0, cx + 100, 0);
-            headGrad.addColorStop(0, "#475569"); headGrad.addColorStop(0.5, "#94a3b8"); headGrad.addColorStop(1, "#334155");
+            const headGrad = ctx.createLinearGradient(cx - 100, 0, cx + 100, 0); headGrad.addColorStop(0, "#475569"); headGrad.addColorStop(0.5, "#94a3b8"); headGrad.addColorStop(1, "#334155");
             ctx.fillStyle = headGrad; ctx.beginPath(); ctx.moveTo(cx - 100, cylTop + 10); ctx.lineTo(cx - 100, cylTop - 30); ctx.lineTo(cx - 30, cylTop - 30); ctx.lineTo(cx + 30, cylTop - 30); ctx.lineTo(cx + 100, cylTop - 30); ctx.lineTo(cx + 100, cylTop + 10); ctx.lineTo(cx + pistW/2, cylTop); ctx.lineTo(cx + 20, cylTop - 15); ctx.lineTo(cx - 20, cylTop - 15); ctx.lineTo(cx - pistW/2, cylTop); ctx.closePath(); ctx.fill();
-
             ctx.fillStyle = "#334155"; ctx.fillRect(cx - 12, cylTop - 30, 24, 15); ctx.fillStyle = "#cbd5e1"; ctx.fillRect(cx - 14, cylTop - 32, 28, 2); ctx.fillStyle = "#f8fafc"; ctx.fillRect(cx - 10, cylTop - 75, 20, 30); ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.roundRect(cx - 12, cylTop - 100, 24, 20, 4); ctx.fill();
             
-            const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220); exhaustGrad.addColorStop(0, "#1e293b"); exhaustGrad.addColorStop(0.5, "#334155"); exhaustGrad.addColorStop(1, "#0f172a"); ctx.fillStyle = exhaustGrad; ctx.beginPath(); ctx.moveTo(cx + pistW/2 + 4, 215); ctx.lineTo(cx + 160, 190); ctx.lineTo(cx + 160, 280); ctx.lineTo(cx + pistW/2 + 4, 275); ctx.closePath(); ctx.fill();
+            // Fumo di scarico visivo (Più nero se grassa)
+            let exhaustColor1 = carburetion > 15 ? "#0f172a" : "#1e293b";
+            let exhaustColor2 = carburetion > 15 ? "#020617" : "#0f172a";
+            const exhaustGrad = ctx.createLinearGradient(cx + pistW/2, 220, cx + 180, 220); exhaustGrad.addColorStop(0, exhaustColor1); exhaustGrad.addColorStop(0.5, "#334155"); exhaustGrad.addColorStop(1, exhaustColor2); ctx.fillStyle = exhaustGrad; ctx.beginPath(); ctx.moveTo(cx + pistW/2 + 4, 215); ctx.lineTo(cx + 160, 190); ctx.lineTo(cx + 160, 280); ctx.lineTo(cx + pistW/2 + 4, 275); ctx.closePath(); ctx.fill();
         }
 
         function drawCombustion(pistY, angle, rpm) {
             if (rpm < 100 || isSeized) return; 
             const pistTop = pistY - pistH/2; let fillHeight = Math.max(0, pistTop - cylTop);
             if (angle >= 0 && angle < 0.8) { 
+                // Fuoco della fiamma cambia colore in base alla miscela
+                let coreColor = carburetion < -15 ? "#ffffff" : "#fde047";
+                let edgeColor = carburetion > 15 ? "rgba(251, 146, 60, 0.9)" : "rgba(239, 68, 68, 0.9)";
+                
                 const fire = ctx.createRadialGradient(cx, cylTop, 0, cx, cylTop + 60, 120); 
-                fire.addColorStop(0, "#ffffff"); fire.addColorStop(0.1, "#fde047"); fire.addColorStop(0.4, "rgba(239, 68, 68, 0.9)"); fire.addColorStop(1, "rgba(0,0,0,0)"); 
+                fire.addColorStop(0, coreColor); fire.addColorStop(0.2, edgeColor); fire.addColorStop(1, "rgba(0,0,0,0)"); 
                 ctx.fillStyle = fire; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); 
             } else if (angle >= 0.8 && angle <= Math.PI) { 
-                ctx.fillStyle = `rgba(30, 41, 59, 0.4)`; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); 
+                let gasOpacity = carburetion > 15 ? 0.7 : 0.4;
+                ctx.fillStyle = `rgba(30, 41, 59, ${gasOpacity})`; ctx.fillRect(cx - pistW/2, cylTop, pistW, fillHeight); 
             }
         }
 
@@ -610,20 +572,12 @@
             ctx.fillStyle = "#020617"; ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.fill(); 
             const crankGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 54); crankGrad.addColorStop(0, "#94a3b8"); crankGrad.addColorStop(1, "#334155"); 
             ctx.fillStyle = crankGrad; ctx.beginPath(); ctx.arc(cx, cy, 54, 0, Math.PI * 2); ctx.fill();
-            
             ctx.lineWidth = 14; ctx.strokeStyle = "#475569"; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(crankX, crankY); ctx.lineTo(cx, pistY); ctx.stroke(); 
-            
             const pistTop = pistY - pistH/2; const pistGrad = ctx.createLinearGradient(cx - pistW/2, 0, cx + pistW/2, 0); 
-            
-            if (isSeized) {
-                pistGrad.addColorStop(0, "#450a0a"); pistGrad.addColorStop(0.5, "#ef4444"); pistGrad.addColorStop(1, "#450a0a");
-            } else {
-                pistGrad.addColorStop(0, "#1e293b"); pistGrad.addColorStop(0.5, "#94a3b8"); pistGrad.addColorStop(1, "#1e293b");
-            }
-            
+            if (isSeized) { pistGrad.addColorStop(0, "#450a0a"); pistGrad.addColorStop(0.5, "#ef4444"); pistGrad.addColorStop(1, "#450a0a"); } 
+            else { pistGrad.addColorStop(0, "#1e293b"); pistGrad.addColorStop(0.5, "#94a3b8"); pistGrad.addColorStop(1, "#1e293b"); }
             ctx.fillStyle = pistGrad; ctx.beginPath(); ctx.moveTo(cx - pistW/2, pistTop + 5); ctx.quadraticCurveTo(cx, pistTop - 5, cx + pistW/2, pistTop + 5); ctx.lineTo(cx + pistW/2, pistTop + pistH); ctx.lineTo(cx - pistW/2, pistTop + pistH); ctx.closePath(); ctx.fill();
             ctx.fillStyle = "#020617"; ctx.fillRect(cx - pistW/2 - 1, pistTop + 12, pistW + 2, 3);
-            
             ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.arc(cx, pistY, 14, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = "#cbd5e1"; ctx.beginPath(); ctx.arc(cx, pistY, 10, 0, Math.PI * 2); ctx.fill();
         }
